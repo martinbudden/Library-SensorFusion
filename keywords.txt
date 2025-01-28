@@ -1,0 +1,25 @@
+################################################
+# Syntax Coloring Map for Sensor Fusion Filters
+################################################
+
+#######################################
+# Data types (KEYWORD1)
+#######################################
+
+ComplementaryFilter     KEYWORD1
+MadgwickFilter          KEYWORD1
+MahonyFilter            KEYWORD1
+SensorFusionFilterBase  KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+update                  KEYWORD2
+setFreeParameters       KEYWORD2
+setAlpha                KEYWORD2
+setBeta                 KEYWORD2
+setKpKi                 KEYWORD2
+
+

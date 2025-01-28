@@ -1,0 +1,19 @@
+{
+    "name": "SensorFusion",
+    "description": "Sensor Fusion Filters for AHRS",
+    "keywords": "Sensor Fusion Filter IMU AHRS Madgwick",
+    "authors": {
+        "name": "Martin Budden",
+        "url": "https://github.com/martinbudden/Library-SensorFusion"
+    },
+    "license": "MIT",
+    "version": "0.0.1",
+    "frameworks": "*",
+    "platforms": "*",
+    "dependencies": [
+        {
+            "name": "IMU_TYPES",
+            "version": ">=0.0.1"
+        }
+    ]
+}
