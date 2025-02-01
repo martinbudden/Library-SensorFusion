@@ -11,6 +11,12 @@
         "llvmlibc",
         "Madgwick",
         "Mahony",
-        "suppr"
+        "Pizer",
+        "Qdot",
+        "Reefwing",
+        "suppr",
+        "unflags",
+        "WXYZ",
+        "Xtensa"
     ]
 }
