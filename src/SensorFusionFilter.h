@@ -9,7 +9,7 @@ Quaternion with added gravity function;
 class QuaternionG : public Quaternion {
 public:
     explicit QuaternionG(const Quaternion& q) : Quaternion(q) {}
-    QuaternionG(float w, float x, float y, float z) : Quaternion(w, x, y, z) {}
+    QuaternionG(float w_, float x_, float y_, float z_) : Quaternion(w_, x_, y_, z_) {}
 public:
     inline xyz_t halfGravity() {
         return xyz_t { .x = x*z - w*y, .y = w*x + y*z, .z = w*w - 0.5F + z*z };
@@ -35,9 +35,9 @@ public:
     Quaternion twoQdot(const xyz_t& gyroRPS) const;
     // Attitude(tilt) from gravity, https://ahrs.readthedocs.io/en/latest/filters/tilt.html#module-ahrs.filters.tilt
      //! Calculate roll (theta) from the normalized accelerometer readings
-    static inline float rollRadiansFromAccNormalized(const xyz_t& acc) { return atan2(acc.y, acc.z); }
+    static inline float rollRadiansFromAccNormalized(const xyz_t& acc) { return atan2f(acc.y, acc.z); }
     //! Calculate pitch (phi) from the normalized accelerometer readings
-    static inline float pitchRadiansFromAccNormalized(const xyz_t& acc) { return atan2(-acc.x, sqrt(acc.y*acc.y + acc.z*acc.z)); }
+    static inline float pitchRadiansFromAccNormalized(const xyz_t& acc) { return atan2f(-acc.x, sqrtf(acc.y*acc.y + acc.z*acc.z)); }
 public: // functions used for unit testing
     void _setAndNormalizeQ(float q0_, float q1_, float q2_, float q3_);
 protected:
@@ -59,7 +59,7 @@ public:
     virtual void setFreeParameters(float parameter0, float parameter1) override;
     inline void setAlpha(float alpha) { setFreeParameters(alpha, 0.0f); }
 private:
-    float _alpha { 0.96 };
+    float _alpha { 0.96F };
 };
 
 /*!

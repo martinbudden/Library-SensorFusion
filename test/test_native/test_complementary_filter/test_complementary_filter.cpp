@@ -22,8 +22,8 @@ void test_quaternion_g() {
 void test_conversions() {
     const float degrees45inRadians = 45.0F * Quaternion::degreesToRadians;
 
-    //const float roll = atan2(acc.y, acc.z);
-    //const float pitch = atan2(-acc.x, sqrt(acc.y*acc.y + acc.z*acc.z));
+    //const float roll = atan2f(acc.y, acc.z);
+    //const float pitch = atan2f(-acc.x, sqrtf(acc.y*acc.y + acc.z*acc.z));
 
 
     TEST_ASSERT_EQUAL_FLOAT(0.0, SensorFusionFilterBase::rollRadiansFromAccNormalized(xyz_t { .x = 0.0, .y = 0.0, .z = 1.0 }));

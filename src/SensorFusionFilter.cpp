@@ -153,10 +153,10 @@ Quaternion ComplementaryFilter::update(const xyz_t& gyroRPS, const xyz_t& accele
     // Calculate roll(phi) and pitch(theta) from normalized accelerometer values
     const float roll = rollRadiansFromAccNormalized(acc);
     const float pitch = pitchRadiansFromAccNormalized(acc);
-    const float cosPhi = cos(roll);
-    const float sinPhi = sin(roll);
-    const float sinTheta = sin(pitch);
-    const float cosTheta = cos(pitch);
+    const float cosPhi = cosf(roll);
+    const float sinPhi = sinf(roll);
+    const float sinTheta = sinf(pitch);
+    const float cosTheta = cosf(pitch);
 
     //  Calculate magnetic field vector, b. See https://ahrs.readthedocs.io/en/latest/filters/tilt.html#module-ahrs.filters.tilt
     xyz_t mag = magnetometer;
@@ -169,7 +169,7 @@ Quaternion ComplementaryFilter::update(const xyz_t& gyroRPS, const xyz_t& accele
     };
 
     // Calculate yaw from the magnetic field vector
-    const float yaw = atan2(-b.y, b.x);
+    const float yaw = atan2f(-b.y, b.x);
 
     // use the accelerometer and magnetometer data to calculate an estimate of the attitude, am
     const Quaternion am = Quaternion::fromEulerAnglesRadians(roll, pitch, yaw);
@@ -359,7 +359,7 @@ Quaternion MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& acceleromet
     const float hY = 2.0F*(m.x*(q0q3 + q1q2) + m.y*(q0q0 - q1q1 + q2q2 - q3q3) + m.z*(q2q3 - q0q1));
 
     const float bXbX = hX*hX + hY*hY;
-    const float bX =   sqrt(bXbX);
+    const float bX =   sqrtf(bXbX);
     const float bZ =   2.0F*(m.x*(q1q3 - q0q2) + m.y*(q0q1 + q2q3)) + m.z*(q0q0 - q1q1_plus_q2q2 + q3q3);
     const float bZbZ = bZ*bZ;
     const float _4bXbZ = 4.0F * bX * bZ;
