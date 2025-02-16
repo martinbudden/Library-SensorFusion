@@ -97,8 +97,8 @@ Quaternion SensorFusionFilterBase::twoQdot(const xyz_t& gyroRPS) const
 
 void ComplementaryFilter::setFreeParameters(float parameter0, float parameter1)
 {
-     _alpha = parameter0;
-     (void)parameter1;
+    _alpha = parameter0;
+    (void)parameter1;
 }
 
 Quaternion ComplementaryFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
@@ -189,8 +189,8 @@ Quaternion ComplementaryFilter::update(const xyz_t& gyroRPS, const xyz_t& accele
 
 void MahonyFilter::setFreeParameters(float parameter0, float parameter1)
 {
-     _kp = parameter0;
-     _ki = parameter1;
+    _kp = parameter0;
+    _ki = parameter1;
 }
 
 Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
@@ -241,8 +241,8 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
 
 void MadgwickFilter::setFreeParameters(float parameter0, float parameter1)
 {
-     _beta = parameter0;
-     (void)parameter1;
+    _beta = parameter0;
+    (void)parameter1;
 }
 
 /*!
