@@ -41,7 +41,7 @@ Normalize a vector. Return the square of the magnitude.
 */
 inline float normalize(xyz_t& v)
 {
-    const float magnitudeSquared = v.magnitude_squared();
+    const float magnitudeSquared = v.magnitudeSquared();
     if (magnitudeSquared != 0.0F) { // [[likely]]
         v *= reciprocalSqrt(magnitudeSquared);
     }
@@ -53,7 +53,7 @@ Normalize a quaternion.
 */
 inline void normalize(Quaternion& q)
 {
-    q *= reciprocalSqrt(q.magnitude_squared());
+    q *= reciprocalSqrt(q.magnitudeSquared());
 }
 
 void SensorFusionFilterBase::reset()
@@ -206,7 +206,7 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
     const xyz_t gravity = q.gravity();
 
     // Error is the cross product between direction measured by acceleration and estimated direction of gravity
-    const xyz_t error = acc.cross_product(gravity);
+    const xyz_t error = acc.cross(gravity);
 
     // Apply proportional feedback
     xyz_t gyro = gyroRPS;
