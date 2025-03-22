@@ -9,29 +9,29 @@ void tearDown() {
 
 inline static float reciprocalSqrt1(float x)
 {
-    const float halfx = 0.5F * x;
+    const float halfX = 0.5F * x;
     union {
         float y;
         long i;
     } u = {x};
 
     u.i = 0x5f3759dF - (u.i >> 1); // Initial estimate for Newton–Raphson method
-    u.y *= 1.5F - (halfx * u.y * u.y); // Single interation
+    u.y *= 1.5F - (halfX * u.y * u.y); // Single interation
 
     return u.y;
 }
 
 inline static float reciprocalSqrt2(float x)
 {
-    const float halfx = 0.5F * x;
+    const float halfX = 0.5F * x;
     union {
         float y;
         long i;
     } u = {x};
 
     u.i = 0x5f3759dF - (u.i >> 1); // Initial estimate for Newton–Raphson method
-    u.y *= 1.5F - (halfx * u.y * u.y); // First iteration
-    u.y *= 1.5F - (halfx * u.y * u.y); // Second iteration
+    u.y *= 1.5F - (halfX * u.y * u.y); // First iteration
+    u.y *= 1.5F - (halfX * u.y * u.y); // Second iteration
 
     return u.y;
 }
@@ -88,7 +88,7 @@ void test_square_root_reciprocal()
     TEST_ASSERT_EQUAL_FLOAT(0.01F, reciprocalSqrtPizer2(10000));
 }
 
-int main(int argc, char **argv) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     UNITY_BEGIN();
 
     RUN_TEST(test_square_root_reciprocal);

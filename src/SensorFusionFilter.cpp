@@ -58,7 +58,7 @@ inline void normalize(Quaternion& q)
 
 void SensorFusionFilterBase::reset()
 {
-    q0 = 0.0F;
+    q0 = 1.0F;
     q1 = 0.0F;
     q2 = 0.0F;
     q3 = 0.0F;
@@ -94,6 +94,11 @@ Quaternion SensorFusionFilterBase::twoQdot(const xyz_t& gyroRPS) const
     );
 }
 
+void SensorFusionFilterBase::setFreeParameters(float parameter0, float parameter1)
+{
+    (void)parameter0;
+    (void)parameter1;
+}
 
 void ComplementaryFilter::setFreeParameters(float parameter0, float parameter1)
 {
@@ -317,7 +322,7 @@ Quaternion MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& acceleromet
     q2 *= magnitudeReciprocal;
     q3 *= magnitudeReciprocal;
 
-    return Quaternion(q0, q1, q2, q3); // NOLINT(modernize-return-braced-init-list) false positive
+    return {q0, q1, q2, q3};
 }
 
 /*!
@@ -424,5 +429,5 @@ Quaternion MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& acceleromet
     q2 *= magnitudeReciprocal;
     q3 *= magnitudeReciprocal;
 
-    return Quaternion(q0, q1, q2, q3); // NOLINT(modernize-return-braced-init-list) false positive
+    return {q0, q1, q2, q3};
 }

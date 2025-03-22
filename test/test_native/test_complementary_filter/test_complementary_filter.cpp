@@ -10,8 +10,8 @@ void tearDown() {
 }
 
 void test_quaternion_g() {
-    Quaternion q(1, 2, 3, 4);
-    QuaternionG g(q);
+    const Quaternion q(1, 2, 3, 4);
+    const QuaternionG g(q);
 
     TEST_ASSERT_EQUAL_FLOAT(1, g.getW());
     TEST_ASSERT_EQUAL_FLOAT(2, g.getX());
@@ -42,7 +42,7 @@ void test_complementary_filter() {
     static ComplementaryFilter complementaryFilter;
 
     const xyz_t gyro0 = { .x = 0.0F, .y = 0.0F, .z = 0.0F };
-    float deltaT = 0.1F;
+    const float deltaT = 0.1F;
 
     complementaryFilter.reset();
     complementaryFilter.setAlpha(0.0F); // set alpha to zero so just the accelerometer component is returned

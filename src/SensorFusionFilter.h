@@ -11,9 +11,7 @@ public:
     explicit QuaternionG(const Quaternion& q) : Quaternion(q) {}
     QuaternionG(float w_, float x_, float y_, float z_) : Quaternion(w_, x_, y_, z_) {}
 public:
-    inline xyz_t halfGravity() {
-        return xyz_t { .x = x*z - w*y, .y = w*x + y*z, .z = w*w - 0.5F + z*z };
-    }
+    inline xyz_t halfGravity() { return xyz_t { .x = x*z - w*y, .y = w*x + y*z, .z = w*w - 0.5F + z*z }; }
     inline xyz_t gravity() { return halfGravity()*2.0F; }
 };
 
@@ -27,9 +25,14 @@ For Sensor fusion filters, Euler angles are defined in radians:
 */
 class SensorFusionFilterBase {
 public:
+    static constexpr float degreesToRadians = static_cast<float>(M_PI / 180.0);
+    static constexpr float gToMetersPerSecondSquared = 9.80665F;
+    static constexpr float M_PI_F = static_cast<float>(M_PI);
+    static constexpr float M_SQRT2_F = static_cast<float>(M_SQRT2);
+public:
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) = 0;
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) = 0;
-    virtual void setFreeParameters(float parameter0, float parameter1) = 0;
+    virtual void setFreeParameters(float parameter0, float parameter1);
     void reset();
     inline Quaternion getOrientation() const { return Quaternion(q0, q1, q2, q3); }
     Quaternion twoQdot(const xyz_t& gyroRPS) const;
