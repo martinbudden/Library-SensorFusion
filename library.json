@@ -1,19 +1,24 @@
 {
     "name": "SensorFusion",
-    "description": "Sensor Fusion Filters for AHRS",
-    "keywords": "Sensor Fusion Filter IMU AHRS Madgwick",
+    "description": "Sensor Fusion Filters for Attitude and Heading Reference Systems (AHRS)",
+    "keywords": "Sensor Fusion Filter Complementary Mahony Madgwick IMU AHRS Attitude Heading Reference System",
     "authors": {
         "name": "Martin Budden",
+        "url": "https://github.com/martinbudden"
+    },
+    "repository": {
+        "type": "git",
         "url": "https://github.com/martinbudden/Library-SensorFusion"
     },
+    "dependencies": [
+        {
+            "name": "IMU_TYPES",
+            "version": ">=0.0.2"
+        }
+    ],
     "license": "MIT",
     "version": "0.0.1",
     "frameworks": "*",
     "platforms": "*",
-    "dependencies": [
-        {
-            "name": "IMU_TYPES",
-            "version": ">=0.0.1"
-        }
-    ]
+    "headers": "SensorFusionFilter.h"
 }
