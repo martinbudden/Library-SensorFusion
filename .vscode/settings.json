@@ -10,6 +10,7 @@
         "cppcoreguidelines",
         "hicpp",
         "Kalman",
+        "Laidig",
         "lfilter",
         "libc",
         "llvmlibc",
@@ -42,6 +43,22 @@
         "Xtensa"
     ],
     "files.associations": {
-        "limits": "cpp"
+        "limits": "cpp",
+        "array": "cpp",
+        "bit": "cpp",
+        "cmath": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "cstdarg": "cpp",
+        "cstdint": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "type_traits": "cpp",
+        "initializer_list": "cpp",
+        "new": "cpp",
+        "numbers": "cpp",
+        "*.tcc": "cpp",
+        "cinttypes": "cpp",
+        "typeinfo": "cpp"
     }
 }

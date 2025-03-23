@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Quaternion.h>
-#include <xyz_type.h>
+#include <Matrix3x3.h>
+
+#define USE_MAGNETOMETER
 
 /*!
 Quaternion with added gravity function;
@@ -41,6 +42,8 @@ public:
     static inline float rollRadiansFromAccNormalized(const xyz_t& acc) { return atan2f(acc.y, acc.z); }
     //! Calculate pitch (phi) from the normalized accelerometer readings
     static inline float pitchRadiansFromAccNormalized(const xyz_t& acc) { return atan2f(-acc.x, sqrtf(acc.y*acc.y + acc.z*acc.z)); }
+    //! Wrap angle to [-pi, pi]
+    static inline float wrapToPi(float theta) { return (theta > M_PI_F) ? theta - 2.0F*M_PI_F : (theta < -M_PI_F) ? theta + 2.0F*M_PI_F : theta; }
 public: // functions used for unit testing
     void _setAndNormalizeQ(float q0_, float q1_, float q2_, float q3_);
 protected:
@@ -92,4 +95,232 @@ public:
     inline void setGyroMeasurementError(float gyroMeasurementError) { setBeta(gyroMeasurementError * sqrtf(3.0F / 4.0F)); }
 private:
     float _beta { 1.0 }; // Initially gain is high, to give fast convergence
+};
+
+/*!
+Compound Butterworth filters for use by VQF (Versatile Quaternion-based Filter)
+*/
+class FilterButterworthCompound {
+public:
+    struct state_t {
+        float s0;
+        float s1;
+    };
+    struct coefficients_t {
+        float a1;
+        float a2;
+        float b0;
+        float b1;
+        float b2;
+    };
+public:
+    FilterButterworthCompound();
+    FilterButterworthCompound(float tau, float deltaT);
+public:
+    void setCoefficients(float tau, float deltaT);
+    inline const coefficients_t& getCoefficients() const { return _coefficients; }
+    void setState(state_t& state, float x0) const;
+    float filterStep(state_t& state, float x) const;
+    inline bool getInitialized() const { return _initialized; }
+protected:
+    coefficients_t _coefficients {};
+    int _initialized;
+    float _tau;
+    float _deltaT;
+};
+
+class FilterButterworthXYZ : public FilterButterworthCompound {
+public:
+    enum {X=0, Y=1, Z=2};
+public:
+    FilterButterworthXYZ() = default;
+    FilterButterworthXYZ(float tau, float deltaT);
+public:
+    xyz_t filter(const xyz_t& v);
+    xyz_t filterXY(const xyz_t& v);
+    inline void reset() { _initialized = false; _state.fill({0.0F, 0.0F}); }
+    inline const std::array<state_t, 3>& getState() const { return _state; }
+protected:
+    std::array<state_t, 3> _state {};
+};
+
+class FilterButterworthMatrix3x3 : public FilterButterworthCompound {
+public:
+    FilterButterworthMatrix3x3() = default;
+    FilterButterworthMatrix3x3(float tau, float deltaT);
+public:
+    Matrix3x3 filter(const Matrix3x3& m);
+    inline void reset() { _initialized = false; _state.fill({0.0F, 0.0F}); }
+    inline const std::array<state_t, 9>& getState() const { return _state; }
+protected:
+    std::array<state_t, 9> _state {};
+};
+
+/*!
+Basic VQF (Versatile Quaternion-based Filter)
+See [https://arxiv.org/pdf/2203.17024](VQF: Highly Accurate IMU Orientation Estimation with Bias Estimation and Magnetic Disturbance Rejection)
+
+VQF is a Strapdown INS(Inertial Navigation System), that is the inertial sensors (gyroscope and accelerometer) are rigidly fixed to the body of the vehicle.
+This contrasts to a Gimbaled INS where the inertial sensors are mounted on a stabilized platform that remains oriented in a fixed direction,
+independent of the vehicle’s movements.
+
+BasicVQF consists of gyroscope integration, accelerometer inclination correction, and optional magnetic heading correction.
+
+The full version VQF additionally includes rest detection, gyroscope bias estimation, and magnetic disturbance rejection (which can be enabled or disabled independently).
+
+Code adapted from https://github.com/dlaidig/vqf under MIT license.
+*/
+class BasicVQF : public SensorFusionFilterBase {
+public:
+    BasicVQF(float gyroDeltaT, float accDeltaT, float magDeltaT);
+    inline explicit BasicVQF(float deltaT) : BasicVQF(deltaT, deltaT, deltaT) {}
+    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
+    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
+    void resetState();
+protected:
+    void updateGyro(const xyz_t& gyroRPS, float deltaT);
+    Quaternion updateAccelerometer(const xyz_t& accelerometer, float deltaT);
+    Quaternion updateMagnetometer(const xyz_t& magnetometer, float deltaT);
+    static float gainFromTau(float tau, float deltaT);
+public:
+    struct params_t {
+        float tauAcc;
+        float tauMag;
+    };
+    struct coeffs_t {
+        float gyroDeltaT;
+        float accDeltaT;
+        float magDeltaT;
+        float kMag;
+    };
+    struct state_t {
+        Quaternion gyroQuaternion {1.0F, 0.0F, 0.0F, 0.0F}; //<! gyro strapdown integration quaternion
+        Quaternion accQuaternion {1.0F, 0.0F, 0.0F, 0.0F}; //<! accelerometer correction quaternion
+        Quaternion orientation6D {1.0F, 0.0F, 0.0F, 0.0F}; //<! 6D orientation estimate
+        Quaternion orientation9D {1.0F, 0.0F, 0.0F, 0.0F}; //<! 9D orientation estimate
+        FilterButterworthXYZ accLPF {}; // accelerometer low pass filter
+        float delta {0.0F}; // heading difference between the 9D inertial reference frame ξ and the 6D sensor specific almost-inertial reference frame ξi (magnetometer correction angle)
+        float magDisagreementAngle {};
+        float kMagInit {1.0F};
+    };
+    const params_t& getParams() { return _params; }
+    const coeffs_t& getCoeffs() { return _coeffs; }
+    const state_t& getState() { return _state; }
+protected:
+    const params_t _params;
+    const coeffs_t _coeffs;
+    state_t _state;
+};
+
+/*!
+VQF (Versatile Quaternion-based Filter)
+See [https://arxiv.org/pdf/2203.17024](VQF: Highly Accurate IMU Orientation Estimation with Bias Estimation and Magnetic Disturbance Rejection)
+
+*/
+//#define VQF_NO_MOTION_BIAS_ESTIMATION
+
+class VQF : public SensorFusionFilterBase {
+public:
+    struct params_t {
+        float tauAcc;
+        bool motionBiasEstimationEnabled;
+        bool restBiasEstimationEnabled;
+        float biasSigmaInit;
+        float biasForgettingTime;
+        float biasClipRPS;
+        float biasSigmaMotion;
+        float biasVerticalForgettingFactor;
+        float biasSigmaRest;
+        float restMinT;
+        float restFilterTau;
+        float restThresholdGyroSquared;
+        float restThresholdAccSquared;
+#if defined(USE_MAGNETOMETER)
+        float tauMag;
+        bool magDisturbanceRejectionEnabled;
+        float magCurrentTau;
+        float magRefTau;
+        float magNormThreshold;
+        float magDipThresholdRadians;
+        float magNewTime;
+        float magNewFirstTime;
+        float magNewMinGyroRPS;
+        float magMinUndisturbedTime;
+        float magMaxRejectionTime;
+        float magRejectionFactor;
+#endif
+    };
+    struct coeffs_t {
+        float gyroDeltaT;
+        float accDeltaT;
+#if defined(USE_MAGNETOMETER)
+        float magDeltaT;
+        float kMag;
+        float kMagRef;
+#endif
+        float biasP0;
+        float biasV;
+        float biasMotionW;
+        float biasVerticalW;
+        float biasRestW;
+    };
+    struct state_t {
+        Quaternion gyroQuaternion {1.0F, 0.0F, 0.0F, 0.0F}; //<! gyro strapdown integration quaternion
+        Quaternion accQuaternion {1.0F, 0.0F, 0.0F, 0.0F}; //<! accelerometer correction quaternion
+        Quaternion orientation6D {1.0F, 0.0F, 0.0F, 0.0F}; //<! 6D orientation estimate
+        Quaternion orientation9D {1.0F, 0.0F, 0.0F, 0.0F}; //<! 9D orientation estimate
+        FilterButterworthXYZ accLPF {}; //<! accelerometer low pass filter
+        float lastAccCorrectionAngularRate {}; // for debug
+        xyz_t gyroBiasRPS {}; // called bias in Laidig and Seel
+        Matrix3x3 biasP {}; //<! Diagonal covariance matrix
+        FilterButterworthMatrix3x3 motionBiasEstimateR_LPF {}; //<! Low-pass filter for rotation matrix
+        FilterButterworthXYZ motionBiasEstimateBiasLPF {};
+        bool restDetected {false};
+        float restT {};
+        xyz_t restLastGyro {};
+        float restLastGyroSquaredDeviation {};
+        FilterButterworthXYZ restGyroLPF {};
+        xyz_t restLastAcc {};
+        float restLastAccSquaredDeviation {};
+        FilterButterworthXYZ restAccLPF {};
+#if defined(USE_MAGNETOMETER)
+        float delta {0.0F}; //<! δi, the heading difference between the 9D inertial reference frame ξ and the 6D sensor specific almost-inertial reference frame ξi (magnetometer correction angle)
+        float kMagInit {1.0F};
+        float lastMagCorrectionAngularRate {}; // for debug
+        bool magDisturbanceDetected {false};
+        float magDisagreementAngle {};
+        float magRefNorm {};
+        float magRefDip {};
+        float magUndisturbedT {};
+        float magRejectT {};
+        float magCandidateNorm {};
+        float magCandidateDip {};
+        float magCandidateT {};
+        xyz_t magNormDip {};
+        FilterButterworthXYZ magNormDipLPF {};
+#endif
+    };
+    const params_t& getParams() { return _params; }
+    const coeffs_t& getCoeffs() { return _coeffs; }
+    const state_t& getState() { return _state; }
+public:
+    VQF(float gyroDeltaT, float accDeltaT, float magDeltaT);
+    inline explicit VQF(float deltaT) : VQF(deltaT, deltaT, deltaT) {}
+    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
+    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
+    void resetState();
+    static float gainFromTau(float tau, float deltaT);
+    float calculateBias(float v) const;
+protected:
+    static inline float square(float x) { return x*x; }
+    void updateGyro(const xyz_t& gyroRPS, float deltaT);
+    Quaternion updateAccelerometer(const xyz_t& accelerometer, float deltaT);
+#if defined(USE_MAGNETOMETER)
+    bool checkForMagneticDisturbance(const xyz_t& magEarth, float deltaT);
+    Quaternion updateMagnetometer(const xyz_t& magnetometer, float deltaT);
+#endif
+private:
+    const params_t _params;
+    const coeffs_t _coeffs;
+    state_t _state {};
 };
