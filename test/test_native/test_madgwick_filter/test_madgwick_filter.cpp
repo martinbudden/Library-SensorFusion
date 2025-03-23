@@ -1,5 +1,5 @@
 #include "arduino_madgwick.h"
-#include "SensorFusionFilter.h"
+#include "SensorFusion.h"
 #include <cmath>
 #include <unity.h>
 

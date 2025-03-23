@@ -1,4 +1,4 @@
-#include "SensorFusionFilter.h"
+#include "SensorFusion.h"
 #include <cmath>
 #include <unity.h>
 

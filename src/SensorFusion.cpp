@@ -1,4 +1,4 @@
-#include "SensorFusionFilter.h"
+#include "SensorFusion.h"
 #include <cstdint>
 
 
@@ -237,7 +237,7 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
     return q;
 }
 
-Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT)
+Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) // NOLINT(readability-convert-member-functions-to-static) false positive
 {
     (void)magnetometer;
     return update(gyroRPS, accelerometer, deltaT);
