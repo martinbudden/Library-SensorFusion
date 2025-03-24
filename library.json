@@ -1,7 +1,7 @@
 {
     "name": "SensorFusion",
     "description": "Sensor Fusion Filters for Attitude and Heading Reference Systems (AHRS)",
-    "keywords": "Sensor Fusion Filter Complementary Mahony Madgwick IMU AHRS Attitude Heading Reference System",
+    "keywords": "Sensor Fusion Filter Mahony Madgwick IMU AHRS",
     "authors": {
         "name": "Martin Budden",
         "url": "https://github.com/martinbudden"
