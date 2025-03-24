@@ -12,7 +12,7 @@
     },
     "dependencies": [
         {
-            "name": "IMU_TYPES",
+            "name": "martinbudden/IMU_TYPES",
             "version": ">=0.0.2"
         }
     ],
