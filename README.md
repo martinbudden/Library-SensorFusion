@@ -12,4 +12,4 @@ Three sensor fusion algorithms are provided:
 
 The Madgwick filter has been refactored to be more computationally efficient (and so faster) than
 the standard version used in many implementations (Arduino, Adafruit, M5Stack, Reefwing-AHRS),
-[see MadgwickRefactoring](../../documents/MadgwickRefactoring.md) for details.
+[see MadgwickRefactoring](documents/MadgwickRefactoring.md) for details.
