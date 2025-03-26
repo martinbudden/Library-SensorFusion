@@ -2,7 +2,6 @@
 
 #include <Matrix3x3.h>
 
-#define USE_MAGNETOMETER
 
 /*!
 Quaternion with added gravity function;
@@ -217,19 +216,19 @@ VQF (Versatile Quaternion-based Filter)
 See [https://arxiv.org/pdf/2203.17024](VQF: Highly Accurate IMU Orientation Estimation with Bias Estimation and Magnetic Disturbance Rejection)
 
 */
-//#define VQF_NO_MOTION_BIAS_ESTIMATION
-
 class VQF : public SensorFusionFilterBase {
 public:
     struct params_t {
         float tauAcc;
-        bool motionBiasEstimationEnabled;
         bool restBiasEstimationEnabled;
+        bool motionBiasEstimationEnabled;
         float biasSigmaInit;
         float biasForgettingTime;
         float biasClipRPS;
+#if defined(VQF_MOTION_BIAS_ESTIMATION)
         float biasSigmaMotion;
         float biasVerticalForgettingFactor;
+#endif
         float biasSigmaRest;
         float restMinT;
         float restFilterTau;
@@ -260,8 +259,10 @@ public:
 #endif
         float biasP0;
         float biasV;
+#if defined(VQF_MOTION_BIAS_ESTIMATION)
         float biasMotionW;
         float biasVerticalW;
+#endif
         float biasRestW;
     };
     struct state_t {
@@ -271,16 +272,18 @@ public:
         Quaternion orientation9D {1.0F, 0.0F, 0.0F, 0.0F}; //<! 9D orientation estimate
         FilterButterworthXYZ accLPF {}; //<! accelerometer low pass filter
         float lastAccCorrectionAngularRate {}; // for debug
-        xyz_t gyroBiasRPS {}; // called bias in Laidig and Seel
+        xyz_t gyroBiasRPS { 0.0F, 0.0F, 0.0F }; // called bias in Laidig and Seel
         Matrix3x3 biasP {}; //<! Diagonal covariance matrix
+#if defined(VQF_MOTION_BIAS_ESTIMATION)
         FilterButterworthMatrix3x3 motionBiasEstimateR_LPF {}; //<! Low-pass filter for rotation matrix
         FilterButterworthXYZ motionBiasEstimateBiasLPF {};
+#endif
         bool restDetected {false};
         float restT {};
-        xyz_t restLastGyro {};
+        xyz_t restLastGyro { 0.0F, 0.0F, 0.0F };
         float restLastGyroSquaredDeviation {};
         FilterButterworthXYZ restGyroLPF {};
-        xyz_t restLastAcc {};
+        xyz_t restLastAcc { 0.0F, 0.0F, 0.0F };
         float restLastAccSquaredDeviation {};
         FilterButterworthXYZ restAccLPF {};
 #if defined(USE_MAGNETOMETER)
@@ -296,7 +299,7 @@ public:
         float magCandidateNorm {};
         float magCandidateDip {};
         float magCandidateT {};
-        xyz_t magNormDip {};
+        xyz_t magNormDip { 0.0F, 0.0F, 0.0F };
         FilterButterworthXYZ magNormDipLPF {};
 #endif
     };
@@ -304,6 +307,7 @@ public:
     const coeffs_t& getCoeffs() { return _coeffs; }
     const state_t& getState() { return _state; }
 public:
+    VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstimationEnabled, bool motionBiasEstimationEnabled, bool magDisturbanceRejectionEnabled);
     VQF(float gyroDeltaT, float accDeltaT, float magDeltaT);
     inline explicit VQF(float deltaT) : VQF(deltaT, deltaT, deltaT) {}
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;

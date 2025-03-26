@@ -630,14 +630,14 @@ float BasicVQF::gainFromTau(float tau, float deltaT)
 
 void BasicVQF::updateGyro(const xyz_t& gyroRPS, float deltaT) // NOLINT(readability-convert-member-functions-to-static) false positive
 {
-    const xyz_t gyro = gyroRPS;
-    const float gyroMagnitude = gyro.magnitude();
+    const float gyroMagnitude = gyroRPS.magnitude();
     if (gyroMagnitude > std::numeric_limits<float>::epsilon()) {
+        // calculate integration step
         const float angle2 = gyroMagnitude * deltaT * 0.5F;
         const float c = cosf(angle2);
         const float s = sinf(angle2)/gyroMagnitude;
-        const Quaternion step(c, s*gyro.x, s*gyro.y, s*gyro.z);
-        _state.gyroQuaternion *= step; // integrate by
+        const Quaternion integrationStep(c, s*gyroRPS.x, s*gyroRPS.y, s*gyroRPS.z);
+        _state.gyroQuaternion *= integrationStep;
         normalize(_state.gyroQuaternion);
     }
 }
@@ -656,11 +656,11 @@ Quaternion BasicVQF::updateAccelerometer(const xyz_t& accelerometer, [[maybe_unu
     normalize(accEarth);
 
     // inclination correction
-    const float qW = sqrtf((accEarth.x + 1.0F) * 0.5F);
-    const Quaternion accCorrection = (qW > 1e-6F) ? Quaternion(qW, 0.5F*accEarth.y/qW,  -0.5F*accEarth.x/qW, 0)
-                                                 : Quaternion(0.0F, 1.0F, 0.0F, 0.0F); // to avoid numeric issues when acc is close to [0 0 -1], ie the correction step is close (<= 0.00011°) to 180°:
+    const float qW = sqrtf((accEarth.z + 1.0F) * 0.5F);
+    // calculate inclination correction, avoiding numeric issues when acc is close to [0 0 -1], ie the correction step is close (<= 0.00011°) to 180°
+    const Quaternion correctionStep = (qW > 1e-6F) ? Quaternion(qW, accEarth.y/(2.0F*qW), -accEarth.x/(2.0F*qW), 0) : Quaternion(0.0F, 1.0F, 0.0F, 0.0F);
 
-    _state.accQuaternion = accCorrection * _state.accQuaternion;
+    _state.accQuaternion = correctionStep * _state.accQuaternion;
     normalize(_state.accQuaternion);
     _state.orientation6D = _state.accQuaternion * _state.gyroQuaternion;
 
@@ -684,10 +684,10 @@ Quaternion BasicVQF::updateMagnetometer(const xyz_t& magnetometer, float deltaT)
     const xyz_t magEarth = _state.orientation6D.rotate(magnetometer);
 
     // calculate disagreement angle based on current magnetometer measurement
-    _state.magDisagreementAngle = atan2f(magEarth.x, magEarth.y) - _state.delta;
+    _state.magDisagreementAngle = atan2f(magEarth.x, magEarth.y);
 
-    // make sure the disagreement angle is in the range [-pi, pi]
-    _state.magDisagreementAngle = wrapToPi(_state.magDisagreementAngle);
+    // update the disagreement angle and make sure it is in the range [-pi, pi]
+    _state.magDisagreementAngle = wrapToPi(_state.magDisagreementAngle - _state.delta);
 
     float k = _coeffs.kMag; // NOLINT(misc-const-correctness) false positive
 
@@ -724,16 +724,18 @@ Quaternion BasicVQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, co
     return updateMagnetometer(magnetometer, deltaT);
 }
 
-VQF::VQF(float gyroDeltaT, float accDeltaT, [[maybe_unused]] float magDeltaT) :
+VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstimationEnabled, bool motionBiasEstimationEnabled, [[maybe_unused]] bool magDisturbanceRejectionEnabled) :
     _params {
         .tauAcc = 3.0F,
-        .motionBiasEstimationEnabled = true,
-        .restBiasEstimationEnabled = true,
+        .restBiasEstimationEnabled = restBiasEstimationEnabled,
+        .motionBiasEstimationEnabled = motionBiasEstimationEnabled,
         .biasSigmaInit = 0.5F,
         .biasForgettingTime = 100.0F,
         .biasClipRPS = 2.0F * degreesToRadians,
+#if defined(VQF_MOTION_BIAS_ESTIMATION)
         .biasSigmaMotion = 0.1F,
         .biasVerticalForgettingFactor = 0.0001F,
+#endif
         .biasSigmaRest = 0.03F,
         .restMinT = 1.5F,
         .restFilterTau = 0.5F,
@@ -741,7 +743,7 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, [[maybe_unused]] float magDeltaT) :
         .restThresholdAccSquared = square(0.5F)
 #if defined(USE_MAGNETOMETER)
         , .tauMag = 9.0F,
-        .magDisturbanceRejectionEnabled = true,
+        .magDisturbanceRejectionEnabled = magDisturbanceRejectionEnabled,
         .magCurrentTau = 0.05F,
         .magRefTau = 20.0F,
         .magNormThreshold = 0.1F,
@@ -765,8 +767,10 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, [[maybe_unused]] float magDeltaT) :
         .biasP0 = square(_params.biasSigmaInit*100.0F),
         // the system noise increases the variance from 0 to (0.1 °/s)^2 in biasForgettingTime seconds
         .biasV = square(0.1F*100.0F)*accDeltaT/_params.biasForgettingTime,
+#if defined(VQF_MOTION_BIAS_ESTIMATION)
         .biasMotionW = calculateBias(_params.biasSigmaMotion),
         .biasVerticalW = _coeffs.biasMotionW / std::max(_params.biasVerticalForgettingFactor, 1e-10F),
+#endif
         .biasRestW = calculateBias(_params.biasSigmaRest)
     }
 {
@@ -774,8 +778,10 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, [[maybe_unused]] float magDeltaT) :
     _state.restGyroLPF.setCoefficients(_params.restFilterTau, _coeffs.gyroDeltaT);
     _state.restAccLPF.setCoefficients(_params.restFilterTau, _coeffs.accDeltaT);
 
+#if defined(VQF_MOTION_BIAS_ESTIMATION)
     _state.motionBiasEstimateR_LPF.setCoefficients(_params.restFilterTau, _coeffs.accDeltaT);
     _state.motionBiasEstimateBiasLPF.setCoefficients(_params.restFilterTau, _coeffs.accDeltaT);
+#endif
 
 #if defined(USE_MAGNETOMETER)
     if (_params.magCurrentTau > 0) {
@@ -786,6 +792,9 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, [[maybe_unused]] float magDeltaT) :
     resetState();
 }
 
+VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT) :
+    VQF(gyroDeltaT, accDeltaT, magDeltaT, true, true, true)
+    {}
 
 float VQF::calculateBias(float v) const
 {
@@ -800,40 +809,29 @@ float VQF::gainFromTau(float tau, float deltaT)
 
 void VQF::resetState()
 {
-    // Algorithm 1
-    // procedure InitializeFilter
     _state.gyroQuaternion.setToIdentity();
     _state.accQuaternion.setToIdentity();
-    // then initialize low pass filters
 
     _state.restDetected = false;
 
-    //std::fill(_state.lastAccLp, _state.lastAccLp+3, 0);
-    //std::fill(_state.accLpState, _state.accLpState + 3*2, NaN);
-    _state.lastAccCorrectionAngularRate = 0.0;
+    _state.lastAccCorrectionAngularRate = 0.0F;
 
-    //std::fill(_state.bias, _state.bias+3, 0);
-    //matrix3SetToScaledIdentity(coeffs.biasP0, _state.biasP);
+    _state.gyroBiasRPS = { 0.0F, 0.0F, 0.0F };
     _state.biasP.setToScaledIdentity(_coeffs.biasP0);
 
-#ifndef VQF_NO_MOTION_BIAS_ESTIMATION
-    //std::fill(_state.motionBiasEstRLpState, _state.motionBiasEstRLpState + 9*2, NaN);
-    //std::fill(_state.motionBiasEstBiasLpState, _state.motionBiasEstBiasLpState + 2*2, NaN);
-#endif
+    _state.restT = 0.0F;
+    _state.restLastGyro = { 0.0F, 0.0F, 0.0F };
+    _state.restLastAcc = { 0.0F, 0.0F, 0.0F };
 
-    //std::fill(_state.restLastSquaredDeviations, _state.restLastSquaredDeviations + 3, 0.0);
-    _state.restT = 0.0;
-    //std::fill(_state.restLastGyrLp, _state.restLastGyrLp + 3, 0.0);
-    //std::fill(_state.restGyrLpState, _state.restGyrLpState + 3*2, NaN);
-    //std::fill(_state.restLastAcc, _state.restLastAcc + 3, 0.0);
-    //std::fill(_state.restAccLpState, _state.restAccLpState + 3*2, NaN);
-
+    // then initialize low pass filters
     _state.accLPF.reset();
     _state.restGyroLPF.reset();
     _state.restAccLPF.reset();
 
+#if defined(VQF_MOTION_BIAS_ESTIMATION)
     _state.motionBiasEstimateR_LPF.reset();
     _state.motionBiasEstimateBiasLPF.reset();
+#endif
 
 #if defined(USE_MAGNETOMETER)
     _state.delta = 0.0;
@@ -874,11 +872,12 @@ void VQF::updateGyro(const xyz_t& gyroRPS, float deltaT) // NOLINT(readability-m
     const xyz_t gyroNoBias = gyroRPS - _state.gyroBiasRPS;
     const float gyroNoBiasMagnitude = gyroNoBias.magnitude();
     if (gyroNoBiasMagnitude > std::numeric_limits<float>::epsilon()) {
+        // calculate integration step
         const float angle2 = gyroNoBiasMagnitude * deltaT * 0.5F;
         const float c = cosf(angle2);
         const float s = sinf(angle2)/gyroNoBiasMagnitude;
-        const Quaternion step(c, s*gyroNoBias.x, s*gyroNoBias.y, s*gyroNoBias.z);
-        _state.gyroQuaternion *= step; // integrate by
+        const Quaternion integrationStep(c, s*gyroNoBias.x, s*gyroNoBias.y, s*gyroNoBias.z);
+        _state.gyroQuaternion *= integrationStep; // integrate
         normalize(_state.gyroQuaternion);
     }
 }
@@ -920,45 +919,22 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT)
 
     // calculate inclination correction, avoiding numeric issues when acc is close to [0 0 -1], ie the correction step is close (<= 0.00011°) to 180°
     const float qW = sqrtf((accEarth.z + 1.0F) * 0.5F);
-    const Quaternion correction = (qW > 1e-6F) ? Quaternion(qW, 0.5F*accEarth.y/qW,  -0.5F*accEarth.x/qW, 0) : Quaternion(0.0F, 1.0F, 0.0F, 0.0F);
+    const Quaternion correctionStep = (qW > 1e-6F) ? Quaternion(qW, accEarth.y/(2.0F*qW), -accEarth.x/(2.0F*qW), 0) : Quaternion(0.0F, 1.0F, 0.0F, 0.0F);
 
-    _state.accQuaternion = correction * _state.accQuaternion;
+    _state.accQuaternion = correctionStep * _state.accQuaternion;
     normalize(_state.accQuaternion);
 
     _state.orientation6D = _state.accQuaternion * _state.gyroQuaternion;
 
     // bias estimation
-#if defined(VQF_NO_MOTION_BIAS_ESTIMATION)
-    // simplified implementation of bias estimation for the special case in which only resting bias estimation is enabled
-    if (_params.restBiasEstimationEnabled) {
-        if (_state.biasP[0] < _coeffs.biasP0) {
-            _state.biasP[0] += _coeffs.biasV;
-        }
-        if (_state.restDetected) {
-            xyz_t e = _state.restLastGyro - _state.gyroBiasRPS;
-            e.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
-
-            // Kalman filter update, simplified scalar version for rest update
-            // (this version only uses the first entry of P as P is diagonal and all diagonal elements are the same)
-            // step 1: P = P + V (done above!)
-            // step 2: K = P R^T inv(W + R P R^T)
-            const float k = _state.biasP[0]/(_coeffs.biasRestW + _state.biasP[0]);
-            // step 3: bias = bias + K (y - R bias) = bias + K e
-            _state.gyroBiasRPS += k*e;
-            _state.gyroBiasRPS.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
-            // step 4: P = P - K R P
-            _state.biasP[0] -= k*_state.biasP[0];
-        }
-    }
-#else
+#if defined(VQF_MOTION_BIAS_ESTIMATION)
     if (_params.restBiasEstimationEnabled || _params.motionBiasEstimationEnabled) {
         Matrix3x3 R(_state.orientation6D); // Create rotation matrix from orientation quaternion
 
         // set measurement error and covariance for the respective Kalman filter update
         xyz_t e {};
         xyz_t w {};
-        if (_state.restDetected && _params.restBiasEstimationEnabled) {
-            R.setToIdentity();
+        if (_state.restDetected) {
             e = _state.restLastGyro - _state.gyroBiasRPS;
             w = { _coeffs.biasRestW, _coeffs.biasRestW, _coeffs.biasRestW };
         } else if (_params.motionBiasEstimationEnabled) {
@@ -975,8 +951,6 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT)
             e.x += biasLp.x - accEarth.y/deltaT; // NOTE accEarth.y is not a typo
             e.y += biasLp.y + accEarth.x/deltaT; // NOTE accEarth.x is not a typo
             w = { _coeffs.biasMotionW, _coeffs.biasMotionW, _coeffs.biasVerticalW };
-        } else {
-            w = { -1.0F, -1.0F, -1.0F };
         }
 
         // Kalman filter update
@@ -990,7 +964,28 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT)
         if (_state.biasP[8] < _coeffs.biasP0) {
             _state.biasP[8] += _coeffs.biasV;
         }
-        if (w.x >= 0) {
+        if (_state.restDetected) {
+            // R is I, identity matrix
+            // clip disagreement to -2..2 °/s
+            // (this also effectively limits the harm done by the first inclination correction step)
+            e.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
+
+            // STEP 2: K = P R^T inv(W + R P R^T), simplifies to K =  P inv(W + P)
+            // K = W + P
+            Matrix3x3 K = _state.biasP;
+            // Add w to diagonal of K
+            K[0] += w.x;
+            K[4] += w.y;
+            K[8] += w.z;
+            K == _state.biasP * K.inverse();
+
+            // STEP 3: bias = bias + K (y - R bias) = bias + K e
+            _state.gyroBiasRPS += K * e;
+            _state.gyroBiasRPS.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS); // clip bias estimate to -2..2 °/s
+
+            // STEP 4: P = P - K R P, simplifies to P = P - K P
+            _state.biasP -= K * _state.biasP;
+        } else if (_params.motionBiasEstimationEnabled) {
             // clip disagreement to -2..2 °/s
             // (this also effectively limits the harm done by the first inclination correction step)
             e.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
@@ -1011,6 +1006,28 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT)
 
             // STEP 4: P = P - K R P
             _state.biasP -= K * R * _state.biasP;
+        }
+    }
+#else
+    // simplified implementation of bias estimation for the special case in which only resting bias estimation is enabled
+    if (_params.restBiasEstimationEnabled) {
+        if (_state.biasP[0] < _coeffs.biasP0) {
+            _state.biasP[0] += _coeffs.biasV;
+        }
+        if (_state.restDetected) {
+            xyz_t e = _state.restLastGyro - _state.gyroBiasRPS;
+            e.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
+
+            // Kalman filter update, simplified scalar version for rest update
+            // (this version only uses the first entry of P as P is diagonal and all diagonal elements are the same)
+            // step 1: P = P + V (done above!)
+            // step 2: K = P R^T inv(W + R P R^T)
+            const float k = _state.biasP[0]/(_coeffs.biasRestW + _state.biasP[0]);
+            // step 3: bias = bias + K (y - R bias) = bias + K e
+            _state.gyroBiasRPS += k*e;
+            _state.gyroBiasRPS.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
+            // step 4: P = P - K R P
+            _state.biasP[0] -= k*_state.biasP[0];
         }
     }
 #endif
@@ -1078,9 +1095,9 @@ Quaternion VQF::updateMagnetometer(const xyz_t& magnetometer, float deltaT) // N
     }
 
     // calculate disagreement angle based on current magnetometer measurement
-    _state.magDisagreementAngle = atan2f(magEarth.x, magEarth.y) - _state.delta;
-    // make sure the disagreement angle is in the range [-pi, pi]
-    _state.magDisagreementAngle = wrapToPi(_state.magDisagreementAngle);
+    _state.magDisagreementAngle = atan2f(magEarth.x, magEarth.y);
+    // update the disagreement angle and make sure it is in the range [-pi, pi]
+    _state.magDisagreementAngle = wrapToPi(_state.magDisagreementAngle - _state.delta);
 
 
     // magnetic disturbance rejection (Algorithm 3 MagneticDisturbanceRejection : procedure MagDistRejection)
