@@ -11,14 +11,16 @@ public:
     explicit QuaternionG(const Quaternion& q) : Quaternion(q) {}
     QuaternionG(float w_, float x_, float y_, float z_) : Quaternion(w_, x_, y_, z_) {}
 public:
-    inline xyz_t halfGravity() { return xyz_t { .x = x*z - w*y, .y = w*x + y*z, .z = w*w - 0.5F + z*z }; }
+    inline xyz_t halfGravity() { return xyz_t {  x*z - w*y,  w*x + y*z, -0.5F + w*w + z*z }; } // ENU convention
     inline xyz_t gravity() { return halfGravity()*2.0F; }
 };
 
 /*!
 SensorFusionFilterBase
 
-For Sensor fusion filters, Euler angles are defined in radians:
+The sensor fusion filters use the ENU (East North Up) coordinate frame.
+
+For sensor fusion filters, Euler angles are defined in radians:
 1. Roll, denoted by ϕ (phi), is rotation about the X axis
 2. Pitch, denoted by θ (theta), is rotation about the Y axis
 3. Yaw, denoted by ψ (psi), is rotation about the Z axis
@@ -214,7 +216,6 @@ protected:
 /*!
 VQF (Versatile Quaternion-based Filter)
 See [https://arxiv.org/pdf/2203.17024](VQF: Highly Accurate IMU Orientation Estimation with Bias Estimation and Magnetic Disturbance Rejection)
-
 */
 class VQF : public SensorFusionFilterBase {
 public:

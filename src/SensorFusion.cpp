@@ -276,7 +276,7 @@ Quaternion MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& acceleromet
 
     xyz_t a = accelerometer;
     // Normalize acceleration if it is non-zero
-    const float accMagnitudeSquared = a.x*a.x + a.y*a.y + a.z*a.z;
+    const float accMagnitudeSquared = a.magnitudeSquared();
     if (accMagnitudeSquared != 0.0F) { // [[likely]]
         const float accMagnitudeReciprocal = reciprocalSqrt(accMagnitudeSquared);
         a.x *= accMagnitudeReciprocal;
@@ -787,6 +787,8 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
     if (_params.magCurrentTau > 0) {
         _state.magNormDipLPF.setCoefficients(_params.magCurrentTau, _coeffs.magDeltaT);
     }
+#else
+    (void)magDeltaT;
 #endif
 
     resetState();

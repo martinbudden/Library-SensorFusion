@@ -13,11 +13,11 @@
     "dependencies": [
         {
             "name": "martinbudden/IMU_TYPES",
-            "version": ">=0.1.0"
+            "version": ">=0.2.1"
         }
     ],
     "license": "MIT",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "frameworks": "*",
     "platforms": "*",
     "headers": "SensorFusion.h"
