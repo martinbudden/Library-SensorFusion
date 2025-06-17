@@ -16,20 +16,20 @@ inline float reciprocalSqrt(float x)
 {
 #if defined(USE_FAST_RECIPROCAL_SQUARE_ROOT) || defined(USE_FAST_RECIPROCAL_SQUARE_ROOT_TWO_ITERATIONS)
     union {
-        float y;
+        float f;
         int32_t i;
-    } u = {x};
+    } u { .f = x };
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
     u.i = 0x5f1f1412 - (u.i >> 1); // Initial estimate for Newton–Raphson method
     // single iteration gives accuracy to 4.5 significant figures
-    u.y *= 1.69000231F - 0.714158168F * x * u.y * u.y; // First iteration
+    u.f *= 1.69000231F - 0.714158168F * x * u.f * u.f; // First iteration
 #if defined(USE_FAST_RECIPROCAL_SQUARE_ROOT_TWO_ITERATIONS)
     // two iterations gives floating point accuracy to within 2 significant bits, and will pass platformio's Unity TEST_ASSERT_EQUAL_FLOAT
-    u.y *= 1.5F - (0.5F * x * u.y * u.y); // Second iteration
+    u.f *= 1.5F - (0.5F * x * u.f * u.f); // Second iteration
 #endif
 
-    return u.y;
+    return u.f;
 // NOLINTEND(cppcoreguidelines-pro-type-union-access)
 #else
     return 1.0F / sqrtf(x);
@@ -92,6 +92,11 @@ Quaternion SensorFusionFilterBase::twoQdot(const xyz_t& gyroRPS) const
          q0*gyroRPS.y - q1*gyroRPS.z + q3*gyroRPS.x,
          q0*gyroRPS.z + q1*gyroRPS.y - q2*gyroRPS.x
     );
+}
+
+bool SensorFusionFilterBase::requiresInitialization() const
+{
+    return false;
 }
 
 void SensorFusionFilterBase::setFreeParameters(float parameter0, float parameter1)
@@ -431,6 +436,12 @@ Quaternion MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& acceleromet
 
     return {q0, q1, q2, q3};
 }
+
+bool MadgwickFilter::requiresInitialization() const
+{
+    return true;
+}
+
 
 FilterButterworthCompound::FilterButterworthCompound() :
     _initialized(false),
@@ -1145,7 +1156,7 @@ Quaternion VQF::updateMagnetometer(const xyz_t& magnetometer, float deltaT) // N
 }
 #endif
 
-Quaternion VQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT)
+Quaternion VQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) // NOLINT(readability-convert-member-functions-to-static)
 {
     updateGyro(gyroRPS, deltaT);
 

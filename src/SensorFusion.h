@@ -35,6 +35,7 @@ public:
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) = 0;
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) = 0;
     virtual void setFreeParameters(float parameter0, float parameter1);
+    virtual bool requiresInitialization() const;
     void reset();
     inline Quaternion getOrientation() const { return Quaternion(q0, q1, q2, q3); }
     Quaternion twoQdot(const xyz_t& gyroRPS) const;
@@ -91,6 +92,7 @@ class MadgwickFilter : public SensorFusionFilterBase {
 public:
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
+    virtual bool requiresInitialization() const override;
     virtual void setFreeParameters(float parameter0, float parameter1) override;
     inline void setBeta(float beta) { setFreeParameters(beta, 0.0f); }
     inline void setGyroMeasurementError(float gyroMeasurementError) { setBeta(gyroMeasurementError * sqrtf(3.0F / 4.0F)); }
