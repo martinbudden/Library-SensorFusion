@@ -55,3 +55,51 @@ const float rollNED_degrees = orientationNED.calculateRollDegrees();
 const float pitchNED_degrees = orientationNED.calculatePitchDegrees();
 const float yawNED_degrees = orientationNED.calculateYawDegrees();
 ```
+
+## Simplified class diagram
+
+VQF (Versatile Quaternion-based Filter) not shown
+
+```mermaid
+classDiagram
+    class SensorFusionFilterBase {
+        <<abstract>>
+        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion *
+        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion *
+        virtual setFreeParameters(float parameter0, float parameter1)
+        virtual requiresInitialization() bool
+        void reset();
+        getOrientation() Quaternion
+    }
+
+    SensorFusionFilterBase <|-- ComplementaryFilter
+    class ComplementaryFilter {
+        _alpha float
+        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
+        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
+        setFreeParameters(float parameter0, float parameter1) override
+        setAlpha(float alpha)
+    }
+
+    SensorFusionFilterBase <|-- MahonyFilter
+    class MahonyFilter {
+        _kp float
+        _ki float
+        _errorIntegral xyz_t
+        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
+        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
+        setFreeParameters(float parameter0, float parameter1) override
+        setKpKi(float kp, float ki)
+    }
+
+    SensorFusionFilterBase <|-- MadgwickFilter
+    class MadgwickFilter {
+        _beta float
+        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
+        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
+        setFreeParameters(float parameter0, float parameter1) override
+        requiresInitialization() bool override
+        setBeta(float beta)
+        setGyroMeasurementError(float gyroMeasurementError)
+    }
+```

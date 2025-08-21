@@ -13,11 +13,11 @@
     "dependencies": [
         {
             "name": "martinbudden/VectorQuaternionMatrix",
-            "version": "^0.4.0"
+            "version": "^0.4.1"
         }
     ],
     "license": "MIT",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "frameworks": "*",
     "platforms": "*",
     "headers": "SensorFusion.h"
