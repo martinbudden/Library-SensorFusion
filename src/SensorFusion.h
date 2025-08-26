@@ -228,7 +228,7 @@ public:
         float biasSigmaInit;
         float biasForgettingTime;
         float biasClipRPS;
-#if defined(VQF_MOTION_BIAS_ESTIMATION)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
         float biasSigmaMotion;
         float biasVerticalForgettingFactor;
 #endif
@@ -237,7 +237,7 @@ public:
         float restFilterTau;
         float restThresholdGyroSquared;
         float restThresholdAccSquared;
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
         float tauMag;
         bool magDisturbanceRejectionEnabled;
         float magCurrentTau;
@@ -255,14 +255,14 @@ public:
     struct coeffs_t {
         float gyroDeltaT;
         float accDeltaT;
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
         float magDeltaT;
         float kMag;
         float kMagRef;
 #endif
         float biasP0;
         float biasV;
-#if defined(VQF_MOTION_BIAS_ESTIMATION)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
         float biasMotionW;
         float biasVerticalW;
 #endif
@@ -277,7 +277,7 @@ public:
         float lastAccCorrectionAngularRate {}; // for debug
         xyz_t gyroBiasRPS { 0.0F, 0.0F, 0.0F }; // called bias in Laidig and Seel
         Matrix3x3 biasP {}; //<! Diagonal covariance matrix
-#if defined(VQF_MOTION_BIAS_ESTIMATION)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
         FilterButterworthMatrix3x3 motionBiasEstimateR_LPF {}; //<! Low-pass filter for rotation matrix
         FilterButterworthXYZ motionBiasEstimateBiasLPF {};
 #endif
@@ -289,7 +289,7 @@ public:
         xyz_t restLastAcc { 0.0F, 0.0F, 0.0F };
         float restLastAccSquaredDeviation {};
         FilterButterworthXYZ restAccLPF {};
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
         float delta {0.0F}; //<! δi, the heading difference between the 9D inertial reference frame ξ and the 6D sensor specific almost-inertial reference frame ξi (magnetometer correction angle)
         float kMagInit {1.0F};
         float lastMagCorrectionAngularRate {}; // for debug
@@ -322,7 +322,7 @@ protected:
     static inline float square(float x) { return x*x; }
     void updateGyro(const xyz_t& gyroRPS, float deltaT);
     Quaternion updateAccelerometer(const xyz_t& accelerometer, float deltaT);
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
     bool checkForMagneticDisturbance(const xyz_t& magEarth, float deltaT);
     Quaternion updateMagnetometer(const xyz_t& magnetometer, float deltaT);
 #endif

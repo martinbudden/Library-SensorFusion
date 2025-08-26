@@ -14,7 +14,7 @@ However benchmarking shows that FAST_RECIPROCAL_SQUARE_ROOT is approximately 3.5
 */
 inline float reciprocalSqrt(float x)
 {
-#if defined(SENSOR_FUSION_USE_FAST_RECIPROCAL_SQUARE_ROOT) || defined(SENSOR_FUSION_USE_FAST_RECIPROCAL_SQUARE_ROOT_TWO_ITERATIONS)
+#if defined(LIBRARY_SENSOR_FUSION_USE_FAST_RECIPROCAL_SQUARE_ROOT) || defined(LIBRARY_SENSOR_FUSION_USE_FAST_RECIPROCAL_SQUARE_ROOT_TWO_ITERATIONS)
     union {
         float f;
         int32_t i;
@@ -24,7 +24,7 @@ inline float reciprocalSqrt(float x)
     u.i = 0x5f1f1412 - (u.i >> 1); // Initial estimate for Newton–Raphson method
     // single iteration gives accuracy to 4.5 significant figures
     u.f *= 1.69000231F - 0.714158168F * x * u.f * u.f; // First iteration
-#if defined(SENSOR_FUSION_USE_FAST_RECIPROCAL_SQUARE_ROOT_TWO_ITERATIONS)
+#if defined(LIBRARY_SENSOR_FUSION_USE_FAST_RECIPROCAL_SQUARE_ROOT_TWO_ITERATIONS)
     // two iterations gives floating point accuracy to within 2 significant bits, and will pass platformio's Unity TEST_ASSERT_EQUAL_FLOAT
     u.f *= 1.5F - (0.5F * x * u.f * u.f); // Second iteration
 #endif
@@ -743,7 +743,7 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
         .biasSigmaInit = 0.5F,
         .biasForgettingTime = 100.0F,
         .biasClipRPS = 2.0F * degreesToRadians,
-#if defined(VQF_MOTION_BIAS_ESTIMATION)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
         .biasSigmaMotion = 0.1F,
         .biasVerticalForgettingFactor = 0.0001F,
 #endif
@@ -752,7 +752,7 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
         .restFilterTau = 0.5F,
         .restThresholdGyroSquared = square(2.0F * degreesToRadians),
         .restThresholdAccSquared = square(0.5F)
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
         , .tauMag = 9.0F,
         .magDisturbanceRejectionEnabled = magDisturbanceRejectionEnabled,
         .magCurrentTau = 0.05F,
@@ -770,7 +770,7 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
     _coeffs {
         .gyroDeltaT = gyroDeltaT,
         .accDeltaT = accDeltaT,
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
         .magDeltaT = magDeltaT,
         .kMag = gainFromTau(_params.tauMag, magDeltaT),
         .kMagRef = gainFromTau(_params.magRefTau, magDeltaT),
@@ -778,7 +778,7 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
         .biasP0 = square(_params.biasSigmaInit*100.0F),
         // the system noise increases the variance from 0 to (0.1 °/s)^2 in biasForgettingTime seconds
         .biasV = square(0.1F*100.0F)*accDeltaT/_params.biasForgettingTime,
-#if defined(VQF_MOTION_BIAS_ESTIMATION)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
         .biasMotionW = calculateBias(_params.biasSigmaMotion),
         .biasVerticalW = _coeffs.biasMotionW / std::max(_params.biasVerticalForgettingFactor, 1e-10F),
 #endif
@@ -789,12 +789,12 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
     _state.restGyroLPF.setCoefficients(_params.restFilterTau, _coeffs.gyroDeltaT);
     _state.restAccLPF.setCoefficients(_params.restFilterTau, _coeffs.accDeltaT);
 
-#if defined(VQF_MOTION_BIAS_ESTIMATION)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
     _state.motionBiasEstimateR_LPF.setCoefficients(_params.restFilterTau, _coeffs.accDeltaT);
     _state.motionBiasEstimateBiasLPF.setCoefficients(_params.restFilterTau, _coeffs.accDeltaT);
 #endif
 
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
     if (_params.magCurrentTau > 0) {
         _state.magNormDipLPF.setCoefficients(_params.magCurrentTau, _coeffs.magDeltaT);
     }
@@ -841,12 +841,12 @@ void VQF::resetState()
     _state.restGyroLPF.reset();
     _state.restAccLPF.reset();
 
-#if defined(VQF_MOTION_BIAS_ESTIMATION)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
     _state.motionBiasEstimateR_LPF.reset();
     _state.motionBiasEstimateBiasLPF.reset();
 #endif
 
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
     _state.delta = 0.0;
     _state.kMagInit = 1.0;
     _state.lastMagCorrectionAngularRate = 0.0;
@@ -940,7 +940,7 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT)
     _state.orientation6D = _state.accQuaternion * _state.gyroQuaternion;
 
     // bias estimation
-#if defined(VQF_MOTION_BIAS_ESTIMATION)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
     if (_params.restBiasEstimationEnabled || _params.motionBiasEstimationEnabled) {
         Matrix3x3 R(_state.orientation6D); // Create rotation matrix from orientation quaternion
 
@@ -1047,7 +1047,7 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT)
     return _state.orientation6D;
 }
 
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
 bool VQF::checkForMagneticDisturbance(const xyz_t& magEarth, float deltaT) // NOLINT(readability-make-member-function-const) false positive
 {
     _state.magNormDip.x = magEarth.magnitude();
@@ -1160,7 +1160,7 @@ Quaternion VQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const x
 {
     updateGyro(gyroRPS, deltaT);
 
-#if defined(USE_MAGNETOMETER)
+#if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
     updateAccelerometer(accelerometer, deltaT);
     return updateMagnetometer(magnetometer, deltaT);
 #else
