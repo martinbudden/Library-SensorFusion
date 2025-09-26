@@ -250,7 +250,7 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
         const float t2 = (1.0f / gyroMagnitude) * sinTheta;
 #else
         const float t1 = cosf(theta);
-        const float t2 = (1.0f / gyroMagnitude) * sinf(theta);
+        const float t2 = (1.0F / gyroMagnitude) * sinf(theta);
 #endif
 
         const float qW = t1*q0 + t2*(-gyro.x * q1 - gyro.y * q2 - gyro.z * q3);
