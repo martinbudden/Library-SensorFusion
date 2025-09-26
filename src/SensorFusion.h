@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Matrix3x3.h>
+#include <cstdint>
 
 
 /*!
@@ -74,6 +75,11 @@ private:
 MahonyFilter
 */
 class MahonyFilter : public SensorFusionFilterBase {
+    MahonyFilter(bool useQuadraticInterpolation, bool useMatrixExponentialApproximation) :
+        _useQuadraticInterpolation(useQuadraticInterpolation),
+        _useMatrixExponentialApproximation(useMatrixExponentialApproximation) 
+        {}
+    MahonyFilter() : MahonyFilter(false, false) {}
 public:
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
@@ -82,7 +88,12 @@ public:
 private:
     float _kp { 10.0 };
     float _ki { 0.0 };
+    uint32_t _useQuadraticInterpolation;
+    uint32_t _useMatrixExponentialApproximation;
     xyz_t _errorIntegral { 0.0, 0.0, 0.0 };
+    // previous gyro values for quadratic interpolation
+    xyz_t _gyroRPS_1 {};
+    xyz_t _gyroRPS_2 {};
 };
 
 /*!

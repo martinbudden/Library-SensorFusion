@@ -218,8 +218,18 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
     // Error is the cross product between direction measured by acceleration and estimated direction of gravity
     const xyz_t error = acc.cross(gravity);
 
+    // Quadratic Interpolation (From Attitude Representation and Kinematic Propagation for Low-Cost UAVs by Robert T. Casey, Equation 14)
+    // See https://docs.rosflight.org/v1.3/algorithms/estimator/#modifications-to-original-passive-filter for a publicly available explanation
+    xyz_t gyro;
+    if (_useQuadraticInterpolation) {
+        gyro =  (5.0F/12.0F)*gyroRPS + (8.0F/12.0F)*_gyroRPS_1 - (1.0F/12.0F)*_gyroRPS_2; 
+        _gyroRPS_2 = _gyroRPS_1;
+        _gyroRPS_1 = gyroRPS;
+    } else {
+        gyro = gyroRPS;
+    }
+
     // Apply proportional feedback
-    xyz_t gyro = gyroRPS;
     gyro += error * _kp;
 
     // Apply integral feedback if _ki set
@@ -228,11 +238,32 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
         gyro += _errorIntegral;
     }
 
-    const Quaternion _2qDot = twoQdot(gyro);
+    if (_useMatrixExponentialApproximation) {
+        // Matrix Exponential Approximation (From Attitude Representation and Kinematic Propagation for Low-Cost UAVs by Robert T. Casey, Equation 12)
+        const float gyroMagnitude = gyro.magnitude();
+        const float theta = gyroMagnitude * 0.5F * deltaT;
+#if defined(LIBRARY_VECTOR_SENSOR_FUSION_USE_FAST_TRIGONOMETRY) && defined(LIBRARY_VECTOR_QUATERNION_MATRIX_USE_FAST_TRIGONOMETRY)
+        float sinTheta {};
+        float cosCosTheta {};
+        FastTrigonometry::sincos(theta, sinTheta, cosTheta);
+        const float t1 = cosTheta;
+        const float t2 = (1.0f / gyroMagnitude) * sinTheta;
+#else
+        const float t1 = cosf(theta);
+        const float t2 = (1.0f / gyroMagnitude) * sinf(theta);
+#endif
 
-    // Update the attitude quaternion using simple Euler integration (qNew = qOld + qDot*deltaT).
-    // Note: to reduce the number of multiplications, _2qDot and deltaT*0.5 are used, ie qNew = qOld +_2qDot*deltaT*0.5F
-    q += _2qDot * (deltaT * 0.5F); // note brackets to ensure scalar multiplication is performed before quaternion multiplication
+        const float qW = t1*q0 + t2*(-gyro.x * q1 - gyro.y * q2 - gyro.z * q3);
+        const float qX = t1*q1 + t2*( gyro.x * q0 + gyro.z * q2 - gyro.y * q3);
+        const float qY = t1*q2 + t2*( gyro.y * q0 - gyro.z * q1 + gyro.x * q3);
+        const float qZ = t1*q3 + t2*( gyro.z * q0 + gyro.y * q1 - gyro.x * q2);
+        q.set(qW, qX, qY, qZ);
+    } else {
+        const Quaternion _2qDot = twoQdot(gyro);
+        // Update the attitude quaternion using simple Euler integration (qNew = qOld + qDot*deltaT).
+        // Note: to reduce the number of multiplications, _2qDot and deltaT*0.5 are used, ie qNew = qOld +_2qDot*deltaT*0.5F
+        q += _2qDot * (deltaT * 0.5F); // note brackets to ensure scalar multiplication is performed before quaternion multiplication
+    }
 
     // Normalize the orientation quaternion
     normalize(q);
