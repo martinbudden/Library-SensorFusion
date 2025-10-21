@@ -609,6 +609,8 @@ FilterButterworthMatrix3x3::FilterButterworthMatrix3x3(float tau, float deltaT)
 
 Matrix3x3 FilterButterworthMatrix3x3::filter(const Matrix3x3& m)
 {
+    Matrix3x3 ret;
+
     // to avoid depending on a single sample, average the first samples (for duration tau)
     // and then use this average to calculate the filter initial _state
     if (!_initialized) {
@@ -617,7 +619,6 @@ Matrix3x3 FilterButterworthMatrix3x3::filter(const Matrix3x3& m)
             _state[ii].s1 += m[ii]; // ._state[ii].s1 used as sum
         }
         const float count = _state[0].s0;
-        Matrix3x3 ret;
         for (size_t ii = 0; ii < _state.size(); ++ii) {
             ret[ii] = _state[ii].s1 / count;
         }
@@ -631,7 +632,7 @@ Matrix3x3 FilterButterworthMatrix3x3::filter(const Matrix3x3& m)
     }
 
     // not in initialization phase, so just filter each component of m
-    Matrix3x3 ret;
+    // scope return value to allow eliding copy on return (return value optimization RVO)
     for (size_t ii = 0; ii < _state.size(); ++ii) {
         ret[ii] = filterStep(_state[ii], m[ii]);
     }
