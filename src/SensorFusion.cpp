@@ -609,7 +609,7 @@ FilterButterworthMatrix3x3::FilterButterworthMatrix3x3(float tau, float deltaT)
 
 Matrix3x3 FilterButterworthMatrix3x3::filter(const Matrix3x3& m)
 {
-    Matrix3x3 ret;
+    Matrix3x3 ret {};
 
     // to avoid depending on a single sample, average the first samples (for duration tau)
     // and then use this average to calculate the filter initial _state
