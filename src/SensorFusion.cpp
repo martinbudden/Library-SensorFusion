@@ -86,7 +86,7 @@ Twice the actual value is returned to reduce the number of multiplications neede
 */
 Quaternion SensorFusionFilterBase::twoQdot(const xyz_t& gyroRPS) const
 {
-    return Quaternion(
+    return Quaternion( // NOLINT(modernize-return-braced-init-list)
         -q1*gyroRPS.x - q2*gyroRPS.y - q3*gyroRPS.z,
          q0*gyroRPS.x + q2*gyroRPS.z - q3*gyroRPS.y,
          q0*gyroRPS.y - q1*gyroRPS.z + q3*gyroRPS.x,
@@ -220,7 +220,7 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
 
     // Quadratic Interpolation (From Attitude Representation and Kinematic Propagation for Low-Cost UAVs by Robert T. Casey, Equation 14)
     // See https://docs.rosflight.org/v1.3/algorithms/estimator/#modifications-to-original-passive-filter for a publicly available explanation
-    xyz_t gyro;
+    xyz_t gyro; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     if (_useQuadraticInterpolation) {
         gyro =  (5.0F/12.0F)*gyroRPS + (8.0F/12.0F)*_gyroRPS_1 - (1.0F/12.0F)*_gyroRPS_2; 
         _gyroRPS_2 = _gyroRPS_1;
@@ -732,7 +732,7 @@ Quaternion BasicVQF::updateMagnetometer(const xyz_t& magnetometer, float deltaT)
     // update the disagreement angle and make sure it is in the range [-pi, pi]
     _state.magDisagreementAngle = wrapToPi(_state.magDisagreementAngle - _state.delta);
 
-    float k = _coeffs.kMag; // NOLINT(misc-const-correctness) false positive
+    float k = _coeffs.kMag;
 
     // ensure fast initial convergence
     if (_state.kMagInit != 0.0F) {
@@ -927,7 +927,7 @@ void VQF::updateGyro(const xyz_t& gyroRPS, float deltaT) // NOLINT(readability-m
     }
 }
 
-Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT)
+Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT) // NOLINT(readability-make-member-function-const)
 {
     xyz_t acc = accelerometer * gToMetersPerSecondSquared;
     const float accMagnitude = normalize(acc);

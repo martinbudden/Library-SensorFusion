@@ -127,7 +127,7 @@ void test_kalman_acc()
     eK[0] += ew[0];
     eK[4] += ew[1];
     eK[8] += ew[2]; // K = W + R P R^T
-    xyz_t w{2.0F, 3.0F, 5.0F};
+    const xyz_t w{2.0F, 3.0F, 5.0F};
     K[0] += w.x;
     K[4] += w.y;
     K[8] += w.z;
@@ -165,8 +165,8 @@ void test_vqf()
     const xyz_t gyro0 { .x = 0.0F, .y = 0.0F, .z = 0.0F };
     const float deltaT = 0.1F;
 
-    static VQF vqf(deltaT, deltaT, deltaT); // NOLINT(misc-const-correctness) false positive
-    Quaternion q = vqf.update(gyro0, xyz_t { .x = 0.0, .y = 0.0, .z = 1.0 }, deltaT);
+    static VQF vqf(deltaT, deltaT, deltaT);
+    const Quaternion q = vqf.update(gyro0, xyz_t { .x = 0.0, .y = 0.0, .z = 1.0 }, deltaT);
     TEST_ASSERT_EQUAL_FLOAT(0, q.calculateRollDegrees());
     TEST_ASSERT_EQUAL_FLOAT(0, q.calculatePitchDegrees());
 

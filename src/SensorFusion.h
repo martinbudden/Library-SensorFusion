@@ -33,6 +33,7 @@ public:
     static constexpr float M_PI_F = static_cast<float>(M_PI);
     static constexpr float M_SQRT2_F = static_cast<float>(M_SQRT2);
 public:
+    virtual ~SensorFusionFilterBase() = default;
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) = 0;
     virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) = 0;
     virtual void setFreeParameters(float parameter0, float parameter1);

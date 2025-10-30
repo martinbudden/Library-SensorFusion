@@ -7,6 +7,7 @@ void setUp() {
 void tearDown() {
 }
 
+// NOLINTBEGIN(cppcoreguidelines-pro-type-union-access,hicpp-signed-bitwise,google-runtime-int)
 inline static float reciprocalSqrt1(float x)
 {
     const float halfX = 0.5F * x;
@@ -61,6 +62,7 @@ float reciprocalSqrtPizer2(float x) {
 
     return u.y;
 }
+// NOLINTEND(cppcoreguidelines-pro-type-union-access,hicpp-signed-bitwise,google-runtime-int)
 
 void test_square_root_reciprocal()
 {

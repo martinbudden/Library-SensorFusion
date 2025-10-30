@@ -11,13 +11,13 @@ void tearDown() {
 
 void test_filter_butterworth_state()
 {
-    FilterButterworthXYZ f; // NOLINT(misc-const-correctness) false positive
+    FilterButterworthXYZ f;
     const float tau = 3.0F;
     const float deltaT = 0.01F;
     f.setCoefficients(tau, deltaT);
     const FilterButterworthCompound::coefficients_t coefficients = f.getCoefficients();
 
-    FilterButterworthCompound::state_t state{}; // NOLINT(misc-const-correctness) false positive
+    FilterButterworthCompound::state_t state{};
     f.setState(state, 1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1.0F - coefficients.b0, state.s0);
     TEST_ASSERT_EQUAL_FLOAT(coefficients.b2 - coefficients.a2, state.s1);
@@ -25,7 +25,7 @@ void test_filter_butterworth_state()
 
 void test_filter_butterworth_xyz_1()
 {
-    FilterButterworthXYZ f; // NOLINT(misc-const-correctness) false positive
+    FilterButterworthXYZ f;
     const float tau = 2.0F;
     const float deltaT = 1.0F;
     f.setCoefficients(tau, deltaT);
@@ -49,7 +49,7 @@ void test_filter_butterworth_xyz_1()
 
 void test_filter_butterworth_xyz_2()
 {
-    FilterButterworthXYZ f; // NOLINT(misc-const-correctness) false positive
+    FilterButterworthXYZ f;
     const float tau = 2.0F;
     const float deltaT = 1.0F;
     f.setCoefficients(tau, deltaT);
