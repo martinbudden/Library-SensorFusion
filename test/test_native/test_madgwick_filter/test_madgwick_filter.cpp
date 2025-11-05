@@ -41,7 +41,7 @@ void test_arduino_madgwick() {
     float qE3 = arduinoMadgwick.q3;
 
     madgwickFilter._setAndNormalizeQ(q0, q1, q2, q3);
-    Quaternion q = madgwickFilter.update(gyro, acc, deltaT);
+    Quaternion q = madgwickFilter.updateOrientation(gyro, acc, deltaT);
     TEST_ASSERT_EQUAL_FLOAT(qE0, q.getW());
     TEST_ASSERT_EQUAL_FLOAT(qE1, q.getX());
     TEST_ASSERT_EQUAL_FLOAT(qE2, q.getY());
@@ -63,7 +63,7 @@ void test_arduino_madgwick() {
     qE3 = arduinoMadgwick.q3;
 
     madgwickFilter._setAndNormalizeQ(q0, q1, q2, q3);
-    q = madgwickFilter.update(gyro, acc, deltaT);
+    q = madgwickFilter.updateOrientation(gyro, acc, deltaT);
     TEST_ASSERT_EQUAL_FLOAT(qE0, q.getW());
     TEST_ASSERT_EQUAL_FLOAT(qE1, q.getX());
     TEST_ASSERT_EQUAL_FLOAT(qE2, q.getY());

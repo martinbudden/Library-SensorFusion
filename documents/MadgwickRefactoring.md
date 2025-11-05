@@ -1,11 +1,11 @@
 # Refactoring of Madgwick filter update
 
-The Madgwick filter implementation in `MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)` has been refactored to
+The Madgwick filter implementation in `MadgwickFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)` has been refactored to
 improve computational efficiency.
 
 The steps taken in that refactoring are outlined here.
 
-A similar refactoring was done for `MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, xyz_t& magnetometer, float deltaT)`.
+A similar refactoring was done for `MadgwickFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, xyz_t& magnetometer, float deltaT)`.
 
 ## Derivation
 

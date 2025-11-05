@@ -34,8 +34,8 @@ public:
     static constexpr float M_SQRT2_F = static_cast<float>(M_SQRT2);
 public:
     virtual ~SensorFusionFilterBase() = default;
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) = 0;
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) = 0;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) = 0;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) = 0;
     virtual void setFreeParameters(float parameter0, float parameter1);
     virtual bool requiresInitialization() const;
     void reset();
@@ -52,11 +52,11 @@ public: // functions used for unit testing
     void _setAndNormalizeQ(float q0_, float q1_, float q2_, float q3_);
 protected:
     // orientation quaternion
-    float q0 { 1.0 };
-    float q1 { 0.0 };
-    float q2 { 0.0 };
-    float q3 { 0.0 };
-    float _accMagnitudeSquaredMax {4.0};
+    float q0 { 1.0F };
+    float q1 { 0.0F };
+    float q2 { 0.0F };
+    float q3 { 0.0F };
+    float _accMagnitudeSquaredMax {4.0F};
 };
 
 /*!
@@ -64,10 +64,10 @@ ComplementaryFilter
 */
 class ComplementaryFilter : public SensorFusionFilterBase {
 public:
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
     virtual void setFreeParameters(float parameter0, float parameter1) override;
-    inline void setAlpha(float alpha) { setFreeParameters(alpha, 0.0f); }
+    inline void setAlpha(float alpha) { setFreeParameters(alpha, 0.0F); }
 private:
     float _alpha { 0.96F };
 };
@@ -82,16 +82,16 @@ class MahonyFilter : public SensorFusionFilterBase {
         {}
     MahonyFilter() : MahonyFilter(false, false) {}
 public:
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
     virtual void setFreeParameters(float parameter0, float parameter1) override;
     inline void setKpKi(float kp, float ki) { setFreeParameters(kp, ki); }
 private:
-    float _kp { 10.0 };
-    float _ki { 0.0 };
+    float _kp { 10.0F };
+    float _ki { 0.0F };
     uint32_t _useQuadraticInterpolation;
     uint32_t _useMatrixExponentialApproximation;
-    xyz_t _errorIntegral { 0.0, 0.0, 0.0 };
+    xyz_t _errorIntegral { 0.0F, 0.0F, 0.0F };
     // previous gyro values for quadratic interpolation
     xyz_t _gyroRPS_1 {};
     xyz_t _gyroRPS_2 {};
@@ -102,14 +102,14 @@ MadgwickFilter
 */
 class MadgwickFilter : public SensorFusionFilterBase {
 public:
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
     virtual bool requiresInitialization() const override;
     virtual void setFreeParameters(float parameter0, float parameter1) override;
-    inline void setBeta(float beta) { setFreeParameters(beta, 0.0f); }
+    inline void setBeta(float beta) { setFreeParameters(beta, 0.0F); }
     inline void setGyroMeasurementError(float gyroMeasurementError) { setBeta(gyroMeasurementError * sqrtf(3.0F / 4.0F)); }
 private:
-    float _beta { 1.0 }; // Initially gain is high, to give fast convergence
+    float _beta { 1.0F }; // Initially gain is high, to give fast convergence
 };
 
 /*!
@@ -189,8 +189,8 @@ class BasicVQF : public SensorFusionFilterBase {
 public:
     BasicVQF(float gyroDeltaT, float accDeltaT, float magDeltaT);
     inline explicit BasicVQF(float deltaT) : BasicVQF(deltaT, deltaT, deltaT) {}
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
     void resetState();
 protected:
     void updateGyro(const xyz_t& gyroRPS, float deltaT);
@@ -325,8 +325,8 @@ public:
     VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstimationEnabled, bool motionBiasEstimationEnabled, bool magDisturbanceRejectionEnabled);
     VQF(float gyroDeltaT, float accDeltaT, float magDeltaT);
     inline explicit VQF(float deltaT) : VQF(deltaT, deltaT, deltaT) {}
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
-    virtual Quaternion update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) override;
+    virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) override;
     void resetState();
     static float gainFromTau(float tau, float deltaT);
     float calculateBias(float v) const;

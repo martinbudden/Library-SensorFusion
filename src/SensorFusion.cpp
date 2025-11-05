@@ -111,7 +111,7 @@ void ComplementaryFilter::setFreeParameters(float parameter0, float parameter1)
     (void)parameter1;
 }
 
-Quaternion ComplementaryFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
+Quaternion ComplementaryFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
 {
     // Create q from q0, q1, q2, q3
     Quaternion q(q0, q1, q2, q3);
@@ -144,7 +144,7 @@ Quaternion ComplementaryFilter::update(const xyz_t& gyroRPS, const xyz_t& accele
 /*!
 see https://ahrs.readthedocs.io/en/latest/filters/complementary.html
 */
-Quaternion ComplementaryFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT)
+Quaternion ComplementaryFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT)
 {
     // Create q from q0, q1, q2, q3
     Quaternion q(q0, q1, q2, q3);
@@ -203,7 +203,7 @@ void MahonyFilter::setFreeParameters(float parameter0, float parameter1)
     _ki = parameter1;
 }
 
-Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
+Quaternion MahonyFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
 {
     // Create q from q0, q1, q2, q3
     QuaternionG q(q0, q1, q2, q3);
@@ -247,7 +247,7 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
         float cosCosTheta {};
         FastTrigonometry::sincos(theta, sinTheta, cosTheta);
         const float t1 = cosTheta;
-        const float t2 = (1.0f / gyroMagnitude) * sinTheta;
+        const float t2 = (1.0F / gyroMagnitude) * sinTheta;
 #else
         const float t1 = cosf(theta);
         const float t2 = (1.0F / gyroMagnitude) * sinf(theta);
@@ -273,10 +273,10 @@ Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer
     return q;
 }
 
-Quaternion MahonyFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) // NOLINT(readability-convert-member-functions-to-static) false positive
+Quaternion MahonyFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) // NOLINT(readability-convert-member-functions-to-static) false positive
 {
     (void)magnetometer;
-    return update(gyroRPS, accelerometer, deltaT);
+    return updateOrientation(gyroRPS, accelerometer, deltaT);
 }
 
 
@@ -301,7 +301,7 @@ and also x-io Technologies [sensor fusion library](https://github.com/xioTechnol
 For computation efficiency this code refactors the code used in many implementations (Arduino, Adafruit, M5Stack, Reefwing-AHRS),
 [see MadgwickRefactoring](../../../documents/MadgwickRefactoring.md)
 */
-Quaternion MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
+Quaternion MadgwickFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
 {
     // Calculate quaternion derivative (qDot) from the angular rate
     // Twice the actual value is used to reduce the number of multiplications needed
@@ -365,7 +365,7 @@ Quaternion MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& acceleromet
 For computation efficiency this code refactors the code used in many implementations (Arduino, Adafruit, M5Stack, Reefwing-AHRS),
 [see MadgwickRefactoring](../../../documents/MadgwickRefactoring.md)
 */
-Quaternion MadgwickFilter::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT)
+Quaternion MadgwickFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT)
 {
     xyz_t a = accelerometer;
     const float accMagnitudeSquared = normalize(a);
@@ -505,7 +505,7 @@ void FilterButterworthCompound::setCoefficients(float tau, float deltaT)
     _coefficients.b0 = b0;
     _coefficients.b1 = 2*b0;
     _coefficients.b2 = b0;
-    // a0 = 1.0, implicitly
+    // a0 = 1.0F, implicitly
     _coefficients.a1 = 2.0F*(C2 - 1.0F)/D;
     _coefficients.a2 = (1.0F - M_SQRT2_F*C + C2)/D;
 }
@@ -521,7 +521,7 @@ float FilterButterworthCompound::filterStep(state_t& state, float x) const
 {
     // https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html
     // difference equations based on scipy.signal.lfilter documentation
-    // assumes that a0 == 1.0
+    // assumes that a0 == 1.0F
     const float y = _coefficients.b0*x + state.s0;
     state.s0 = _coefficients.b1*x - _coefficients.a1*y + state.s1;
     state.s1 = _coefficients.b2*x - _coefficients.a2*y;
@@ -661,8 +661,8 @@ void BasicVQF::resetState()
 
     _state.accLPF.reset();
 
-    _state.delta = 0.0;
-    _state.kMagInit = 1.0;
+    _state.delta = 0.0F;
+    _state.kMagInit = 1.0F;
 }
 
 
@@ -710,7 +710,7 @@ Quaternion BasicVQF::updateAccelerometer(const xyz_t& accelerometer, [[maybe_unu
     return _state.orientation6D;
 }
 
-Quaternion BasicVQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
+Quaternion BasicVQF::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
 {
     updateGyro(gyroRPS, deltaT);
     return updateAccelerometer(accelerometer, deltaT);
@@ -746,7 +746,7 @@ Quaternion BasicVQF::updateMagnetometer(const xyz_t& magnetometer, float deltaT)
 
         // disable if t > tauMag
         if (_state.kMagInit*_params.tauMag < deltaT) {
-            _state.kMagInit = 0.0;
+            _state.kMagInit = 0.0F;
         }
     }
 
@@ -759,7 +759,7 @@ Quaternion BasicVQF::updateMagnetometer(const xyz_t& magnetometer, float deltaT)
     return _state.orientation9D;
 }
 
-Quaternion BasicVQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT)
+Quaternion BasicVQF::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT)
 {
     updateGyro(gyroRPS, deltaT);
     updateAccelerometer(accelerometer, deltaT);
@@ -879,18 +879,18 @@ void VQF::resetState()
 #endif
 
 #if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
-    _state.delta = 0.0;
-    _state.kMagInit = 1.0;
-    _state.lastMagCorrectionAngularRate = 0.0;
+    _state.delta = 0.0F;
+    _state.kMagInit = 1.0F;
+    _state.lastMagCorrectionAngularRate = 0.0F;
     _state.magDisturbanceDetected = false;
-    _state.magDisagreementAngle = 0.0;
-    _state.magRefNorm = 0.0;
-    _state.magRefDip = 0.0;
-    _state.magUndisturbedT = 0.0;
+    _state.magDisagreementAngle = 0.0F;
+    _state.magRefNorm = 0.0F;
+    _state.magRefDip = 0.0F;
+    _state.magUndisturbedT = 0.0F;
     _state.magRejectT = _params.magMaxRejectionTime;
-    _state.magCandidateNorm = -1.0;
-    _state.magCandidateDip = 0.0;
-    _state.magCandidateT = 0.0;
+    _state.magCandidateNorm = -1.0F;
+    _state.magCandidateDip = 0.0F;
+    _state.magCandidateT = 0.0F;
     _state.magNormDipLPF.reset();
 #endif
 }
@@ -1188,7 +1188,7 @@ Quaternion VQF::updateMagnetometer(const xyz_t& magnetometer, float deltaT) // N
 }
 #endif
 
-Quaternion VQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) // NOLINT(readability-convert-member-functions-to-static)
+Quaternion VQF::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) // NOLINT(readability-convert-member-functions-to-static)
 {
     updateGyro(gyroRPS, deltaT);
 
@@ -1201,7 +1201,7 @@ Quaternion VQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const x
 #endif
 }
 
-Quaternion VQF::update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
+Quaternion VQF::updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT)
 {
     updateGyro(gyroRPS, deltaT);
     return updateAccelerometer(accelerometer, deltaT);

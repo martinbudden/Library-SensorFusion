@@ -47,18 +47,18 @@ void test_complementary_filter() {
     complementaryFilter.reset();
     complementaryFilter.setAlpha(0.0F); // set alpha to zero so just the accelerometer component is returned
 
-    Quaternion q = complementaryFilter.update(gyro0, xyz_t { .x = 0.0, .y = 0.0, .z = 1.0 }, deltaT);
+    Quaternion q = complementaryFilter.updateOrientation(gyro0, xyz_t { .x = 0.0, .y = 0.0, .z = 1.0 }, deltaT);
     TEST_ASSERT_EQUAL_FLOAT(0, q.calculateRollDegrees());
     TEST_ASSERT_EQUAL_FLOAT(0, q.calculatePitchDegrees());
 
 
     complementaryFilter.reset();
-    q = complementaryFilter.update(gyro0, xyz_t { .x = 1.0F/sqrtf(2.0F), .y = 0.0, .z = 1.0F/sqrtf(2.0F) }, deltaT);
+    q = complementaryFilter.updateOrientation(gyro0, xyz_t { .x = 1.0F/sqrtf(2.0F), .y = 0.0, .z = 1.0F/sqrtf(2.0F) }, deltaT);
     TEST_ASSERT_EQUAL_FLOAT(0, q.calculateRollDegrees());
     TEST_ASSERT_EQUAL_FLOAT(-45, q.calculatePitchDegrees());
 
     complementaryFilter.reset();
-    q = complementaryFilter.update(gyro0, xyz_t { .x = 0.0, .y = 1.0, .z = 1.0 }, deltaT);
+    q = complementaryFilter.updateOrientation(gyro0, xyz_t { .x = 0.0, .y = 1.0, .z = 1.0 }, deltaT);
     TEST_ASSERT_EQUAL_FLOAT(45, q.calculateRollDegrees());
     TEST_ASSERT_EQUAL_FLOAT(0, q.calculatePitchDegrees());
 

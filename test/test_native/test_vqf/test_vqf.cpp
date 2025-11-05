@@ -166,7 +166,7 @@ void test_vqf()
     const float deltaT = 0.1F;
 
     static VQF vqf(deltaT, deltaT, deltaT);
-    const Quaternion q = vqf.update(gyro0, xyz_t { .x = 0.0, .y = 0.0, .z = 1.0 }, deltaT);
+    const Quaternion q = vqf.updateOrientation(gyro0, xyz_t { .x = 0.0, .y = 0.0, .z = 1.0 }, deltaT);
     TEST_ASSERT_EQUAL_FLOAT(0, q.calculateRollDegrees());
     TEST_ASSERT_EQUAL_FLOAT(0, q.calculatePitchDegrees());
 
