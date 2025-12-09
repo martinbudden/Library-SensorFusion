@@ -20,7 +20,7 @@ void test_quaternion_g() {
 }
 
 void test_conversions() {
-    const float degrees45inRadians = 45.0F * Quaternion::degreesToRadians;
+    const float degrees45inRadians = 45.0F * Quaternion::DEGREES_TO_RADIANS;
 
     //const float roll = atan2f(acc.y, acc.z);
     //const float pitch = atan2f(-acc.x, sqrtf(acc.y*acc.y + acc.z*acc.z));

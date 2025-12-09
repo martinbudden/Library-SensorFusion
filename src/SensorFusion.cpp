@@ -687,7 +687,7 @@ void BasicVQF::updateGyro(const xyz_t& gyroRPS, float deltaT) // NOLINT(readabil
 
 Quaternion BasicVQF::updateAccelerometer(const xyz_t& accelerometer, [[maybe_unused]] float deltaT) // NOLINT(readability-convert-member-functions-to-static) false positive
 {
-    xyz_t acc = accelerometer * gToMetersPerSecondSquared;
+    xyz_t acc = accelerometer * G_TO_METERS_PER_SECOND_PER_SECOND;
     normalize(acc);
 
     // rotate acc ito the auxiliary frame Ιi, and filter it
@@ -774,7 +774,7 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
         .motionBiasEstimationEnabled = motionBiasEstimationEnabled,
         .biasSigmaInit = 0.5F,
         .biasForgettingTime = 100.0F,
-        .biasClipRPS = 2.0F * degreesToRadians,
+        .biasClipRPS = 2.0F * DEGREES_TO_RADIANS,
 #if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MOTION_BIAS_ESTIMATION)
         .biasSigmaMotion = 0.1F,
         .biasVerticalForgettingFactor = 0.0001F,
@@ -782,7 +782,7 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
         .biasSigmaRest = 0.03F,
         .restMinT = 1.5F,
         .restFilterTau = 0.5F,
-        .restThresholdGyroSquared = square(2.0F * degreesToRadians),
+        .restThresholdGyroSquared = square(2.0F * DEGREES_TO_RADIANS),
         .restThresholdAccSquared = square(0.5F)
 #if defined(LIBRARY_SENSOR_FUSION_VQF_USE_MAGNETOMETER)
         , .tauMag = 9.0F,
@@ -790,10 +790,10 @@ VQF::VQF(float gyroDeltaT, float accDeltaT, float magDeltaT, bool restBiasEstima
         .magCurrentTau = 0.05F,
         .magRefTau = 20.0F,
         .magNormThreshold = 0.1F,
-        .magDipThresholdRadians = 10.0F * degreesToRadians,
+        .magDipThresholdRadians = 10.0F * DEGREES_TO_RADIANS,
         .magNewTime = 20.0F,
         .magNewFirstTime = 5.0F,
-        .magNewMinGyroRPS = 20.0F * degreesToRadians,
+        .magNewMinGyroRPS = 20.0F * DEGREES_TO_RADIANS,
         .magMinUndisturbedTime = 0.5F,
         .magMaxRejectionTime = 60.0F,
         .magRejectionFactor = 2.0F
@@ -929,7 +929,7 @@ void VQF::updateGyro(const xyz_t& gyroRPS, float deltaT) // NOLINT(readability-m
 
 Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT) // NOLINT(readability-make-member-function-const)
 {
-    xyz_t acc = accelerometer * gToMetersPerSecondSquared;
+    xyz_t acc = accelerometer * G_TO_METERS_PER_SECOND_PER_SECOND;
     const float accMagnitude = normalize(acc);
     if (accMagnitude == 0.0F) {
         // ignore [0 0 0] samples

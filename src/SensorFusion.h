@@ -28,10 +28,12 @@ For sensor fusion filters, Euler angles are defined in radians:
 */
 class SensorFusionFilterBase {
 public:
-    static constexpr float degreesToRadians = static_cast<float>(M_PI / 180.0);
-    static constexpr float gToMetersPerSecondSquared = 9.80665F;
-    static constexpr float M_PI_F = static_cast<float>(M_PI);
-    static constexpr float M_SQRT2_F = static_cast<float>(M_SQRT2);
+    static constexpr float M_PI_F = 3.14159265358979323846F;
+    static constexpr float M_PI_2_F = M_PI_F / 2.0F;
+    static constexpr float RADIANS_TO_DEGREES = 180.0F / M_PI_F;
+    static constexpr float DEGREES_TO_RADIANS = M_PI_F / 180.0F;
+    static constexpr float M_SQRT2_F = 1.41421356237309504880F;
+    static constexpr float G_TO_METERS_PER_SECOND_PER_SECOND = 9.80665F;
 public:
     virtual ~SensorFusionFilterBase() = default;
     virtual Quaternion updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) = 0;

@@ -49,7 +49,7 @@ qNED = qENUtoNED * qENU
 If the application uses Euler angles, then these can be directly obtained using the converted orientation's Euler angle calculation functions:
 
 ```cpp
-const Quaternion orientationENU = sensorFusionFilter.update(gyroRPS, acc, deltaT);
+const Quaternion orientationENU = sensorFusionFilter.updateOrientation(gyroRPS, acc, deltaT);
 const Quaternion orientationNED = qENUtoNED * orientationENU;
 const float rollNED_degrees = orientationNED.calculateRollDegrees();
 const float pitchNED_degrees = orientationNED.calculatePitchDegrees();
@@ -64,8 +64,8 @@ VQF (Versatile Quaternion-based Filter) not shown
 classDiagram
     class SensorFusionFilterBase {
         <<abstract>>
-        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion *
-        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion *
+        updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion *
+        updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion *
         virtual setFreeParameters(float parameter0, float parameter1)
         virtual requiresInitialization() bool
         void reset();
@@ -75,8 +75,8 @@ classDiagram
     SensorFusionFilterBase <|-- ComplementaryFilter
     class ComplementaryFilter {
         _alpha float
-        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
-        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
+        updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
+        updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
         setFreeParameters(float parameter0, float parameter1) override
         setAlpha(float alpha)
     }
@@ -86,8 +86,8 @@ classDiagram
         _kp float
         _ki float
         _errorIntegral xyz_t
-        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
-        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
+        updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
+        updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
         setFreeParameters(float parameter0, float parameter1) override
         setKpKi(float kp, float ki)
     }
@@ -95,8 +95,8 @@ classDiagram
     SensorFusionFilterBase <|-- MadgwickFilter
     class MadgwickFilter {
         _beta float
-        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
-        update(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
+        updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, float deltaT) Quaternion override
+        updateOrientation(const xyz_t& gyroRPS, const xyz_t& accelerometer, const xyz_t& magnetometer, float deltaT) Quaternion override
         setFreeParameters(float parameter0, float parameter1) override
         requiresInitialization() bool override
         setBeta(float beta)
