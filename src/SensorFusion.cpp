@@ -1013,7 +1013,7 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT) //
             // R is I, identity matrix
             // clip disagreement to -2..2 °/s
             // (this also effectively limits the harm done by the first inclination correction step)
-            e.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
+            e.clampInPlace(-_params.biasClipRPS, _params.biasClipRPS);
 
             // STEP 2: K = P R^T inv(W + R P R^T), simplifies to K =  P inv(W + P)
             // K = W + P
@@ -1026,14 +1026,14 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT) //
 
             // STEP 3: bias = bias + K (y - R bias) = bias + K e
             _state.gyroBiasRPS += K * e;
-            _state.gyroBiasRPS.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS); // clip bias estimate to -2..2 °/s
+            _state.gyroBiasRPS.clampInPlace(-_params.biasClipRPS, _params.biasClipRPS); // clip bias estimate to -2..2 °/s
 
             // STEP 4: P = P - K R P, simplifies to P = P - K P
             _state.biasP -= K * _state.biasP;
         } else if (_params.motionBiasEstimationEnabled) {
             // clip disagreement to -2..2 °/s
             // (this also effectively limits the harm done by the first inclination correction step)
-            e.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
+            e.clampInPlace(-_params.biasClipRPS, _params.biasClipRPS);
 
             // STEP 2: K = P R^T inv(W + R P R^T)
             const Matrix3x3 RT = R.transpose();
@@ -1047,7 +1047,7 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT) //
 
             // STEP 3: bias = bias + K (y - R bias) = bias + K e
             _state.gyroBiasRPS += K * e;
-            _state.gyroBiasRPS.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS); // clip bias estimate to -2..2 °/s
+            _state.gyroBiasRPS.clampInPlace(-_params.biasClipRPS, _params.biasClipRPS); // clip bias estimate to -2..2 °/s
 
             // STEP 4: P = P - K R P
             _state.biasP -= K * R * _state.biasP;
@@ -1061,7 +1061,7 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT) //
         }
         if (_state.restDetected) {
             xyz_t e = _state.restLastGyro - _state.gyroBiasRPS;
-            e.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
+            e.clampInPlace(-_params.biasClipRPS, _params.biasClipRPS);
 
             // Kalman filter update, simplified scalar version for rest update
             // (this version only uses the first entry of P as P is diagonal and all diagonal elements are the same)
@@ -1070,7 +1070,7 @@ Quaternion VQF::updateAccelerometer(const xyz_t& accelerometer, float deltaT) //
             const float k = _state.biasP[0]/(_coeffs.biasRestW + _state.biasP[0]);
             // step 3: bias = bias + K (y - R bias) = bias + K e
             _state.gyroBiasRPS += k*e;
-            _state.gyroBiasRPS.clipInPlace(-_params.biasClipRPS, _params.biasClipRPS);
+            _state.gyroBiasRPS.clampInPlace(-_params.biasClipRPS, _params.biasClipRPS);
             // step 4: P = P - K R P
             _state.biasP[0] -= k*_state.biasP[0];
         }

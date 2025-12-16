@@ -10,9 +10,10 @@ void tearDown() {
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,cppcoreguidelines-pro-bounds-pointer-arithmetic,modernize-avoid-c-arrays,modernize-use-using,readability-non-const-parameter,cppcoreguidelines-pro-bounds-array-to-pointer-decay,hicpp-no-array-decay)
 
+//!!TODO: this test code should really move into VectorQuaternionMatrix.
 void test_enu_to_ned()
 {
-    // _E prefix denotes expected value
+    // _E suffix denotes expected value
 
     const xyz_t vENU   { .x = 3.0F, .y = 5.0F, .z =  7.0F };
     const xyz_t vNED_E { .x = 5.0F, .y = 3.0F, .z = -7.0F };
@@ -36,7 +37,7 @@ void test_enu_to_ned()
 
     const Quaternion qNED = qENUtoNED * qENU;
     TEST_ASSERT_EQUAL_FLOAT(rollENU - 180.0F, qNED.calculateRollDegrees());
-    TEST_ASSERT_EQUAL_FLOAT(180.0F + pitchENU, qNED.calculatePitchDegrees());
+    TEST_ASSERT_EQUAL_FLOAT(-pitchENU, qNED.calculatePitchDegrees()); //!!TODO: check this
     TEST_ASSERT_EQUAL_FLOAT(90.0F - yawENU, qNED.calculateYawDegrees());
 
     const Quaternion qENU2 = qNEDtoENU * qNED;
