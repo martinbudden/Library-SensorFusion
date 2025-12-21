@@ -490,8 +490,8 @@ FilterButterworthCompound::FilterButterworthCompound(float tau, float deltaT) :
 
 void FilterButterworthCompound::setCoefficients(float tau, float deltaT)
 {
-    static constexpr float M_PI_F = static_cast<float>(M_PI);
-    static constexpr float M_SQRT2_F = static_cast<float>(M_SQRT2);
+    static constexpr float M_PI_F = 3.14159265358979323846F;
+    static constexpr float M_SQRT2_F = 1.41421356237309504880F;
 
     _initialized = false;
     _tau = tau;
