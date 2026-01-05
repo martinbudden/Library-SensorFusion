@@ -232,9 +232,9 @@ protected:
         .orientation6D = {1.0F, 0.0F, 0.0F, 0.0F},
         .orientation9D = {1.0F, 0.0F, 0.0F, 0.0F},
         .accLPF = {},
-        .delta = {0.0F},
+        .delta = 0.0F,
         .magDisagreementAngle = {},
-        .kMagInit = {1.0F}
+        .kMagInit = 1.0F
     };
 };
 
