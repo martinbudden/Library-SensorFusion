@@ -12,14 +12,12 @@ public:
     explicit QuaternionG(const Quaternion& q) : Quaternion(q) {}
     QuaternionG(float w_, float x_, float y_, float z_) : Quaternion(w_, x_, y_, z_) {}
 public:
-    xyz_t halfGravity() { return xyz_t {  x*z - w*y,  w*x + y*z, -0.5F + w*w + z*z }; } // ENU convention
+    xyz_t halfGravity() { return xyz_t {  x*z - w*y,  w*x + y*z, -0.5F + w*w + z*z }; }
     xyz_t gravity() { return halfGravity()*2.0F; }
 };
 
 /*!
 SensorFusionFilterBase
-
-The sensor fusion filters use the ENU (East North Up) coordinate frame.
 
 For sensor fusion filters, Euler angles are defined in radians:
 1. Roll, denoted by ϕ (phi), is rotation about the X axis
