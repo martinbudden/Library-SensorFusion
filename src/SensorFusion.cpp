@@ -1,6 +1,8 @@
 #include "SensorFusion.h"
 #include <cstdint>
 
+float normalize(xyz_t& v);
+void normalize(Quaternion& q);
 
 /*!
 Reciprocal square root
@@ -39,7 +41,7 @@ inline float reciprocalSqrt(float x)
 /*!
 Normalize a vector. Return the square of the magnitude.
 */
-inline float normalize(xyz_t& v)
+float normalize(xyz_t& v)
 {
     const float magnitudeSquared = v.magnitudeSquared();
     if (magnitudeSquared != 0.0F) { // [[likely]]
@@ -51,7 +53,7 @@ inline float normalize(xyz_t& v)
 /*!
 Normalize a quaternion.
 */
-inline void normalize(Quaternion& q)
+void normalize(Quaternion& q)
 {
     q *= reciprocalSqrt(q.magnitudeSquared());
 }
@@ -652,6 +654,11 @@ BasicVQF::BasicVQF(float gyroDeltaT, float accDeltaT, float magDeltaT) :
     }
 {
     _state.accLPF.setCoefficients(_params.tauAcc, _coeffs.accDeltaT);
+}
+
+BasicVQF::BasicVQF(float deltaT) :
+    BasicVQF(deltaT, deltaT, deltaT)
+{
 }
 
 void BasicVQF::resetState()
