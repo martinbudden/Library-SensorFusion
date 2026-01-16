@@ -78,7 +78,7 @@ MahonyFilter
 class MahonyFilter : public SensorFusionFilterBase {
     MahonyFilter(bool useQuadraticInterpolation, bool useMatrixExponentialApproximation) :
         _useQuadraticInterpolation(useQuadraticInterpolation),
-        _useMatrixExponentialApproximation(useMatrixExponentialApproximation) 
+        _useMatrixExponentialApproximation(useMatrixExponentialApproximation)
         {}
     MahonyFilter() : MahonyFilter(false, false) {}
 public:

@@ -224,7 +224,7 @@ Quaternion MahonyFilter::updateOrientation(const xyz_t& gyroRPS, const xyz_t& ac
     // See https://docs.rosflight.org/v1.3/algorithms/estimator/#modifications-to-original-passive-filter for a publicly available explanation
     xyz_t gyro; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     if (_useQuadraticInterpolation) {
-        gyro =  (5.0F/12.0F)*gyroRPS + (8.0F/12.0F)*_gyroRPS_1 - (1.0F/12.0F)*_gyroRPS_2; 
+        gyro =  (5.0F/12.0F)*gyroRPS + (8.0F/12.0F)*_gyroRPS_1 - (1.0F/12.0F)*_gyroRPS_2;
         _gyroRPS_2 = _gyroRPS_1;
         _gyroRPS_1 = gyroRPS;
     } else {
